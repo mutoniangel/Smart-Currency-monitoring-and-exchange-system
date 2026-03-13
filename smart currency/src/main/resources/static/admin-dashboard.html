@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control - Smart Currency</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 3rem 1.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-links {
+            margin-top: 4rem;
+            list-style: none;
+        }
+
+        .sidebar-link {
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background: hsla(203, 95%, 45%, 0.08);
+            color: var(--primary);
+        }
+
+        .admin-content {
+            padding: 3rem 5%;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            padding: 2.5rem;
+        }
+
+        .stat-card h4 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 850;
+            color: var(--text-pure);
+            letter-spacing: -1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-experience">
+        <div class="bg-grid"></div>
+    </div>
+
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <a href="/" class="logo">Smart Admin</a>
+            <ul class="sidebar-links">
+                <li><a href="#" class="sidebar-link active">Dashboard Overview</a></li>
+                <li><a href="#" class="sidebar-link">Currency Liquidity</a></li>
+                <li><a href="#" class="sidebar-link">Network Users</a></li>
+                <li><a href="#" class="sidebar-link">Security Logs</a></li>
+                <li><a href="#" onclick="logout()" class="sidebar-link" style="margin-top: 10rem; color: var(--danger);">Authorize Logout</a></li>
+            </ul>
+        </aside>
+
+        <main class="admin-content animate-fade-up">
+            <header style="margin-bottom: 4rem;">
+                <h1 style="font-size: 2.75rem; color: var(--text-pure); font-weight: 850; letter-spacing: -2px;">System Control Center</h1>
+                <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 500;">Real-time management of global liquidity and network health.</p>
+            </header>
+
+            <div class="stat-grid">
+                <div class="card stat-card">
+                    <h4>Total Network Volume</h4>
+                    <div class="stat-value">$142.8M</div>
+                </div>
+                <div class="card stat-card">
+                    <h4>Active Nodes</h4>
+                    <div class="stat-value">2,842</div>
+                </div>
+                <div class="card stat-card">
+                    <h4>Daily Handled</h4>
+                    <div class="stat-value">48.2K</div>
+                </div>
+                <div class="card stat-card">
+                    <h4>Network Health</h4>
+                    <div class="stat-value" style="color: var(--success);">99.98%</div>
+                </div>
+            </div>
+
+            <section class="card" style="padding: 2.5rem; overflow-x: auto;">
+                <h3 style="margin-bottom: 2.5rem; font-size: 1.5rem; font-weight: 850; letter-spacing: -1px;">Recent Network Events</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Origin Currency</th>
+                                <th>Target Currency</th>
+                                <th>Base Rate</th>
+                                <th>Spread Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="currencyTable">
+                            <!-- Data populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const userStr = localStorage.getItem('user');
+        if (!userStr || JSON.parse(userStr).role !== 'Admin') window.location.href = '/login.html';
+
+        async function loadCurrencies() {
+            try {
+                const response = await fetch('/api/currencies');
+                const currencies = await response.json();
+                const table = document.getElementById('currencyTable');
+                table.innerHTML = currencies.map(c => `
+                    <tr>
+                        <td style="font-weight: 750; color: var(--text-pure);">${c.name}</td>
+                        <td style="color: var(--text-muted); font-weight: 600;">Global Standard</td>
+                        <td style="font-family: monospace; font-size: 1.1rem; font-weight: 700;">${c.exchangeRate}</td>
+                        <td><span class="badge badge-success">Optimized</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error('Data pull failed'); }
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/index.html';
+        }
+
+        loadCurrencies();
+    </script>
+</body>
+</html>
