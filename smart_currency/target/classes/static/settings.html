@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Currency - Settings</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="dashboard.html" class="brand">Smart Currency</a>
+    <div class="nav-links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="transactions.html">Transactions</a>
+        <a href="settings.html" class="active">Settings</a>
+    </div>
+    <div class="user-actions">
+        <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+    <header style="margin-bottom: 2rem;">
+        <h2>User Settings</h2>
+    </header>
+
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); max-width: 500px; margin: 0 auto;">
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Username</label>
+            <input type="text" id="username" disabled style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background: #eee;">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">New Password (leave blank to keep current)</label>
+            <input type="password" id="password" placeholder="••••••••" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+        </div>
+        <button onclick="updateProfile()" style="background: var(--premium-blue); color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold;">Update Profile</button>
+        <div id="msg" style="margin-top: 1rem; text-align: center;"></div>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="support-info">
+        <span>📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a></span>
+        <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
+    </div>
+    <div class="copyright">
+        &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved.
+    </div>
+</footer>
+
+<script>
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    if (!token) window.location.href = 'index.html';
+
+    document.getElementById('nav-username').innerText = username;
+
+    async function fetchProfile() {
+        try {
+            const res = await fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const user = await res.json();
+            document.getElementById('username').value = user.username;
+            document.getElementById('email').value = user.email || '';
+        } catch (err) {
+            console.error('Failed to fetch profile', err);
+        }
+    }
+
+    async function updateProfile() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const msg = document.getElementById('msg');
+
+        const res = await fetch('/api/auth/update', {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+            msg.innerText = 'Profile updated successfully!';
+            msg.style.color = 'green';
+        } else {
+            msg.innerText = 'Failed to update profile.';
+            msg.style.color = 'red';
+        }
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+
+    fetchProfile();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Currency - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .card h3 { margin-top: 0; color: var(--sky-dark); border-bottom: 2px solid #ddd; padding-bottom: 0.5rem; }
+        .btn-update { padding: 8px 15px; background: var(--premium-blue); color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .btn-sync { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        table th { background: var(--sky-blue); color: white; padding: 12px; }
+        table td { padding: 10px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="admin_dashboard.html" class="brand">Smart Currency Admin</a>
+    <div class="nav-links">
+        <a href="admin_dashboard.html" class="active">Overview</a>
+        <a href="dashboard.html">User View</a>
+    </div>
+    <div class="user-actions">
+        <span style="font-weight: bold; color: #e17055;">ADMIN PANEL</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container" style="position: relative;">
+    <div style="position: absolute; right: 2rem; top: 0; display: flex; gap: 1rem;">
+        <button class="btn-sync" onclick="seedAndSync()" style="background: var(--sky-blue);">Seed & Sync All Currencies</button>
+        <button class="btn-sync" onclick="syncRates()">Refresh Rates Only</button>
+    </div>
+    <header style="margin-bottom: 2rem;">
+        <h1>Admin Control Panel</h1>
+    </header>
+
+    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem;">
+        <h3>User Monitoring</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Username</th>
+                    <th style="text-align: left;">Email</th>
+                </tr>
+            </thead>
+            <tbody id="user-list"></tbody>
+        </table>
+    </div>
+
+    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+        <h3>Currency Rate Management</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Code</th>
+                    <th style="text-align: left;">Name</th>
+                    <th style="text-align: left;">Rate (to USD)</th>
+                    <th style="text-align: left;">Trend</th>
+                    <th style="text-align: left;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="rate-list"></tbody>
+        </table>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="support-info">
+        <span>📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a></span>
+        <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
+    </div>
+    <div class="copyright">
+        &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved.
+    </div>
+</footer>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'index.html';
+
+    async function fetchData() {
+        try {
+            const userRes = await fetch('/api/admin/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (userRes.status === 403) {
+                alert('Access Denied: Admins Only');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            const users = await userRes.json();
+            document.getElementById('user-list').innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.username}</td>
+                    <td>${u.email}</td>
+                </tr>
+            `).join('');
+
+            const rateRes = await fetch('/api/currencies', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const rates = await rateRes.json();
+            document.getElementById('rate-list').innerHTML = rates.map(r => `
+                <tr>
+                    <td><b>${r.currencyCode}</b></td>
+                    <td>${r.currencyName}</td>
+                    <td><input type="number" id="rate-${r.currencyCode}" value="${r.currentRate}" step="0.0001" style="width: 100px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;"></td>
+                    <td>
+                        <select id="trend-${r.currencyCode}" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                            <option value="UP" ${r.trend === 'UP' ? 'selected' : ''}>UP</option>
+                            <option value="DOWN" ${r.trend === 'DOWN' ? 'selected' : ''}>DOWN</option>
+                            <option value="STABLE" ${r.trend === 'STABLE' ? 'selected' : ''}>STABLE</option>
+                        </select>
+                    </td>
+                    <td><button class="btn-update" onclick="updateRate('${r.currencyCode}')">Save</button></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function seedAndSync() {
+        const res = await fetch('/api/admin/seed', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            alert('20+ Currencies seeded and synced successfully!');
+            fetchData();
+        } else {
+            const err = await res.text();
+            alert('Seeding failed: ' + (err || 'Check console/logs'));
+        }
+    }
+
+    async function syncRates() {
+        const res = await fetch('/api/admin/sync', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            alert('Live sync successful!');
+            fetchData();
+        } else alert('Sync failed');
+    }
+
+    async function updateRate(code) {
+        const rate = document.getElementById(`rate-${code}`).value;
+        const trend = document.getElementById(`trend-${code}`).value;
+        const res = await fetch('/api/admin/rates', {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ currencyCode: code, currentRate: parseFloat(rate), trend })
+        });
+        if (res.ok) alert('Rate updated!');
+        else alert('Failed to update');
+        fetchData();
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+
+    fetchData();
+</script>
+
+</body>
+</html>

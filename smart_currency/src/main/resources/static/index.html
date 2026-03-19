@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Currency - Login & Register</title>
+    <style>
+        :root {
+            --sky-blue: #00a8ff;
+            --sky-white: #f5f6fa;
+            --sky-dark: #2f3640;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #74b9ff, #a29bfe);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--sky-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--sky-dark);
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--sky-blue);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--sky-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0097e6;
+        }
+
+        .toggle-link {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--sky-dark);
+        }
+
+        .toggle-link a {
+            color: var(--sky-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .message {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success { background: #dff9fb; color: #0984e3; display: block; }
+        .error { background: #fab1a0; color: #d63031; display: block; }
+
+        .footer {
+            background: rgba(47, 54, 64, 0.9);
+            color: #f5f6fa;
+            padding: 1.5rem;
+            width: 100%;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            font-size: 0.85rem;
+        }
+        .footer a { color: #00a8ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="auth-container">
+    <h1 id="title">User Login</h1>
+    
+    <div id="login-form">
+        <div class="form-group">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter password">
+        </div>
+        <div class="form-group">
+            <label id="login-captcha-label">Captcha: Loading...</label>
+            <input type="text" id="login-captcha" placeholder="Answer">
+        </div>
+        <button onclick="handleLogin()">Login</button>
+        <div class="toggle-link">
+            Don't have an account? <a href="#" onclick="toggleAuth()">Register Now</a>
+        </div>
+    </div>
+
+    <div id="register-form" style="display: none;">
+        <div class="form-group">
+            <label for="reg-username">Username</label>
+            <input type="text" id="reg-username" placeholder="Choose a username">
+        </div>
+        <div class="form-group">
+            <label for="reg-email">Email</label>
+            <input type="email" id="reg-email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" placeholder="Create a password">
+        </div>
+        <div class="form-group">
+            <label id="reg-captcha-label">Captcha: Loading...</label>
+            <input type="text" id="reg-captcha" placeholder="Answer">
+        </div>
+        <button onclick="handleRegister()">Create Account</button>
+        <div class="toggle-link">
+            Already have an account? <a href="#" onclick="toggleAuth()">Login Now</a>
+        </div>
+    </div>
+
+    <div id="msg" class="message"></div>
+</div>
+
+<footer class="footer">
+    <div>
+        📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a> | 
+        📞 Contact: <a href="tel:0798052603">0798052603</a>
+    </div>
+    <div style="margin-top: 0.5rem; opacity: 0.7; font-size: 0.75rem;">
+        &copy; 2024 Smart Currency Monitoring & Exchange System.
+    </div>
+</footer>
+
+<script>
+    const sessionId = Math.random().toString(36).substring(7);
+
+    function toggleAuth() {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const title = document.getElementById('title');
+        const msg = document.getElementById('msg');
+        msg.style.display = 'none';
+
+        if (loginForm.style.display === 'none') {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            title.innerText = 'User Login';
+        } else {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            title.innerText = 'Register Account';
+        }
+    }
+
+    async function loadCaptcha() {
+        try {
+            const res = await fetch(`/api/auth/captcha?sessionId=${sessionId}`);
+            const text = await res.text();
+            document.getElementById('login-captcha-label').innerText = `Captcha: ${text} = ?`;
+            document.getElementById('reg-captcha-label').innerText = `Captcha: ${text} = ?`;
+        } catch (e) {
+            console.error("Failed to load captcha", e);
+        }
+    }
+
+    async function handleLogin() {
+        const u = document.getElementById('login-username').value;
+        const p = document.getElementById('login-password').value;
+        const c = document.getElementById('login-captcha').value;
+        const msg = document.getElementById('msg');
+
+        const res = await fetch(`/api/auth/login?sessionId=${sessionId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p, captchaAnswer: c })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('role', data.role);
+            
+            msg.innerText = 'Login successful! Redirecting...';
+            msg.className = 'message success';
+            
+            const target = data.role === 'ADMIN' ? '/admin_dashboard.html' : '/dashboard.html';
+            setTimeout(() => window.location.href = target, 1500);
+        } else {
+            const err = await res.text();
+            msg.innerText = 'Login failed: ' + err;
+            msg.className = 'message error';
+            loadCaptcha();
+        }
+    }
+
+    async function handleRegister() {
+        const u = document.getElementById('reg-username').value;
+        const e = document.getElementById('reg-email').value;
+        const p = document.getElementById('reg-password').value;
+        const c = document.getElementById('reg-captcha').value;
+        const msg = document.getElementById('msg');
+
+        const res = await fetch(`/api/auth/register?sessionId=${sessionId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, email: e, password: p, role: 'USER', captchaAnswer: c })
+        });
+
+        if (res.ok) {
+            msg.innerText = 'Registration successful! You can now login.';
+            msg.className = 'message success';
+            setTimeout(toggleAuth, 2000);
+        } else {
+            const err = await res.text();
+            msg.innerText = 'Failed: ' + err;
+            msg.className = 'message error';
+            loadCaptcha();
+        }
+    }
+
+    loadCaptcha();
+</script>
+
+</body>
+</html>
