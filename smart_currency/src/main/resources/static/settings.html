@@ -14,6 +14,7 @@
         <a href="dashboard.html">Dashboard</a>
         <a href="transactions.html">Transactions</a>
         <a href="settings.html" class="active">Settings</a>
+        <a href="admin_dashboard.html" id="admin-link" style="display: none; color: #e17055;">Admin</a>
     </div>
     <div class="user-actions">
         <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
@@ -57,9 +58,14 @@
 <script>
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
+    const userRole = localStorage.getItem('role');
     if (!token) window.location.href = 'index.html';
 
     document.getElementById('nav-username').innerText = username;
+
+    if (userRole && userRole.toUpperCase() === 'ADMIN') {
+        document.getElementById('admin-link').style.display = 'inline';
+    }
 
     async function fetchProfile() {
         try {

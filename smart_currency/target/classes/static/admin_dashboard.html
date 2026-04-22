@@ -11,6 +11,12 @@
         .btn-sync { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         table th { background: var(--sky-blue); color: white; padding: 12px; }
         table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card .stat-value { font-size: 2rem; font-weight: bold; color: var(--premium-blue); }
+        .stat-card .stat-label { font-size: 0.85rem; color: #7f8c8d; }
+        .btn-enable { padding: 5px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .btn-enabled { background: #d4edda; color: #155724; }
+        .btn-disabled { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
@@ -36,19 +42,41 @@
         <h1>Admin Control Panel</h1>
     </header>
 
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;" id="stats-section">
+        <div class="stat-card">
+            <div class="stat-value" id="stat-users">-</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-currencies">-</div>
+            <div class="stat-label">Active Currencies</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-transactions">-</div>
+            <div class="stat-label">Total Transactions</div>
+        </div>
+    </div>
+
+    <!-- User Monitoring -->
     <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem;">
         <h3>User Monitoring</h3>
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr>
+                    <th style="text-align: left;">ID</th>
                     <th style="text-align: left;">Username</th>
                     <th style="text-align: left;">Email</th>
+                    <th style="text-align: left;">Role</th>
+                    <th style="text-align: left;">Status</th>
+                    <th style="text-align: left;">Action</th>
                 </tr>
             </thead>
             <tbody id="user-list"></tbody>
         </table>
     </div>
 
+    <!-- Currency Rate Management -->
     <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
         <h3>Currency Rate Management</h3>
         <table style="width: 100%; border-collapse: collapse;">
@@ -72,13 +100,27 @@
         <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
     </div>
     <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved.
+        &copy; 2024 Smart Currency Monitoring &amp; Exchange System. All rights reserved.
     </div>
 </footer>
 
 <script>
     const token = localStorage.getItem('token');
     if (!token) window.location.href = 'index.html';
+
+    async function fetchStats() {
+        try {
+            const res = await fetch('/api/admin/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const stats = await res.json();
+                document.getElementById('stat-users').innerText = stats.totalUsers || 0;
+                document.getElementById('stat-currencies').innerText = stats.totalCurrencies || 0;
+                document.getElementById('stat-transactions').innerText = stats.totalTransactions || 0;
+            }
+        } catch(e) { console.error(e); }
+    }
 
     async function fetchData() {
         try {
@@ -93,8 +135,12 @@
             const users = await userRes.json();
             document.getElementById('user-list').innerHTML = users.map(u => `
                 <tr>
-                    <td>${u.username}</td>
+                    <td>${u.userID}</td>
+                    <td><b>${u.username}</b></td>
                     <td>${u.email}</td>
+                    <td><span style="padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: ${u.role === 'ADMIN' ? '#ffeaa7' : '#dfe6e9'}; color: ${u.role === 'ADMIN' ? '#d63031' : '#2d3436'};">${u.role}</span></td>
+                    <td><span class="btn-enable ${u.enabled ? 'btn-enabled' : 'btn-disabled'}">${u.enabled ? 'Active' : 'Disabled'}</span></td>
+                    <td>${u.role !== 'ADMIN' ? `<button class="btn-update" onclick="toggleUser(${u.userID})" style="font-size: 0.8rem; padding: 5px 12px;">${u.enabled ? 'Disable' : 'Enable'}</button>` : ''}</td>
                 </tr>
             `).join('');
 
@@ -122,6 +168,21 @@
         }
     }
 
+    async function toggleUser(userId) {
+        const res = await fetch(`/api/admin/users/${userId}/toggle`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const msg = await res.text();
+            alert(msg);
+            fetchData();
+            fetchStats();
+        } else {
+            alert('Failed to toggle user status');
+        }
+    }
+
     async function seedAndSync() {
         const res = await fetch('/api/admin/seed', {
             method: 'POST',
@@ -130,6 +191,7 @@
         if (res.ok) {
             alert('20+ Currencies seeded and synced successfully!');
             fetchData();
+            fetchStats();
         } else {
             const err = await res.text();
             alert('Seeding failed: ' + (err || 'Check console/logs'));
@@ -168,6 +230,7 @@
         window.location.href = 'index.html';
     }
 
+    fetchStats();
     fetchData();
 </script>
 

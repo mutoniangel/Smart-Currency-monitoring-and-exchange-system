@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Currency - Transactions</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end; }
+        .filter-bar label { font-size: 0.85rem; color: #7f8c8d; display: block; margin-bottom: 0.3rem; }
+        .filter-bar input, .filter-bar select { padding: 0.6rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+        .filter-bar button { padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
+    </style>
 </head>
 <body>
 
@@ -14,6 +24,7 @@
         <a href="dashboard.html">Dashboard</a>
         <a href="transactions.html" class="active">Transactions</a>
         <a href="settings.html">Settings</a>
+        <a href="admin_dashboard.html" id="admin-link" style="display: none; color: #e17055;">Admin</a>
     </div>
     <div class="user-actions">
         <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
@@ -27,6 +38,29 @@
     </header>
 
     <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div>
+                <label>Start Date</label>
+                <input type="datetime-local" id="filter-start">
+            </div>
+            <div>
+                <label>End Date</label>
+                <input type="datetime-local" id="filter-end">
+            </div>
+            <div>
+                <label>Target Currency</label>
+                <select id="filter-currency">
+                    <option value="">All</option>
+                </select>
+            </div>
+            <div>
+                <button onclick="applyFilter()" style="background: var(--premium-blue);">Filter</button>
+                <button onclick="clearFilter()" style="background: #95a5a6;">Clear</button>
+            </div>
+        </div>
+
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; background: var(--sky-white);">
@@ -34,12 +68,15 @@
                     <th style="padding: 12px; border-bottom: 1px solid #eee;">From</th>
                     <th style="padding: 12px; border-bottom: 1px solid #eee;">To</th>
                     <th style="padding: 12px; border-bottom: 1px solid #eee;">Amount Sold</th>
+                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Fee (1%)</th>
                     <th style="padding: 12px; border-bottom: 1px solid #eee;">Rate</th>
+                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Received</th>
+                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Status</th>
                     <th style="padding: 12px; border-bottom: 1px solid #eee;">ID</th>
                 </tr>
             </thead>
             <tbody id="txn-list">
-                <tr><td colspan="6">Loading history...</td></tr>
+                <tr><td colspan="9">Loading history...</td></tr>
             </tbody>
         </table>
     </div>
@@ -51,43 +88,95 @@
         <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
     </div>
     <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved.
+        &copy; 2024 Smart Currency Monitoring &amp; Exchange System. All rights reserved.
     </div>
 </footer>
 
 <script>
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
+    const userRole = localStorage.getItem('role');
     if (!token) window.location.href = 'index.html';
 
     document.getElementById('nav-username').innerText = username;
 
-    async function fetchHistory() {
+    if (userRole && userRole.toUpperCase() === 'ADMIN') {
+        document.getElementById('admin-link').style.display = 'inline';
+    }
+
+    // Load currency options for filter
+    async function loadCurrencies() {
         try {
-            const res = await fetch('/api/transactions/my', {
+            const res = await fetch('/api/currencies');
+            const currencies = await res.json();
+            const sel = document.getElementById('filter-currency');
+            currencies.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.currencyCode;
+                opt.textContent = c.currencyCode + ' - ' + c.currencyName;
+                sel.appendChild(opt);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    async function fetchHistory(url) {
+        try {
+            const res = await fetch(url || '/api/transactions/my', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const transactions = await res.json();
             const list = document.getElementById('txn-list');
             
-            if (transactions.length === 0) {
-                list.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No transactions found.</td></tr>';
+            if (!transactions || transactions.length === 0) {
+                list.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No transactions found.</td></tr>';
                 return;
             }
 
-            list.innerHTML = transactions.map(t => `
+            list.innerHTML = transactions.map(t => {
+                const fromCode = (t.fromCurrency && t.fromCurrency.currencyCode) ? t.fromCurrency.currencyCode : '???';
+                const toCode = (t.toCurrency && t.toCurrency.currencyCode) ? t.toCurrency.currencyCode : '???';
+                const fee = t.fee !== undefined && t.fee !== null ? parseFloat(t.fee).toFixed(2) : '-';
+                const converted = t.convertedAmount !== undefined && t.convertedAmount !== null ? parseFloat(t.convertedAmount).toFixed(2) : '-';
+                const status = t.status || 'PENDING';
+                const statusClass = status === 'COMPLETED' ? 'status-completed' : (status === 'FAILED' ? 'status-failed' : 'status-pending');
+                return `
                 <tr>
                     <td style="padding: 12px; border-bottom: 1px solid #eee;">${new Date(t.transactionDate).toLocaleString()}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><b>${t.fromCurrency.currencyCode}</b></td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><b>${t.toCurrency.currencyCode}</b></td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${t.amount.toFixed(2)}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${t.exchangeRate.toFixed(4)}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><b>${fromCode}</b></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><b>${toCode}</b></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${parseFloat(t.amount).toFixed(2)} ${fromCode}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: #e17055;">${fee} ${fromCode}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: var(--premium-blue);">${parseFloat(t.exchangeRate).toFixed(4)}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #27ae60;">${status === 'COMPLETED' ? '+' + converted + ' ' + toCode : '-'}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><span class="status-badge ${statusClass}">${status}</span></td>
                     <td style="padding: 12px; border-bottom: 1px solid #eee; color: #95a5a6; font-size: 0.8rem;">#${t.transactionID}</td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         } catch (err) {
             console.error('Failed to fetch transactions', err);
         }
+    }
+
+    function applyFilter() {
+        const start = document.getElementById('filter-start').value;
+        const end = document.getElementById('filter-end').value;
+        const currency = document.getElementById('filter-currency').value;
+
+        let params = new URLSearchParams();
+        if (start) params.append('startDate', new Date(start).toISOString());
+        if (end) params.append('endDate', new Date(end).toISOString());
+        if (currency) params.append('targetCurrency', currency);
+
+        const url = '/api/transactions/filter?' + params.toString();
+        fetchHistory(url);
+    }
+
+    function clearFilter() {
+        document.getElementById('filter-start').value = '';
+        document.getElementById('filter-end').value = '';
+        document.getElementById('filter-currency').value = '';
+        fetchHistory();
     }
 
     function logout() {
@@ -95,6 +184,7 @@
         window.location.href = 'index.html';
     }
 
+    loadCurrencies();
     fetchHistory();
 </script>
 

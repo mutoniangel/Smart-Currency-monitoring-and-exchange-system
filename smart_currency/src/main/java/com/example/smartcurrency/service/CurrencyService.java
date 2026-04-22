@@ -16,6 +16,10 @@ public class CurrencyService {
         return currencyRepository.findAll();
     }
 
+    public List<Currency> filterCurrencies(String code, String trend) {
+        return currencyRepository.findFilteredCurrencies(code, trend);
+    }
+
     public void seedCurrencies() {
         ensureCurrency("USD", "US Dollar", new java.math.BigDecimal("1.0000"));
         ensureCurrency("EUR", "Euro", new java.math.BigDecimal("0.9200"));

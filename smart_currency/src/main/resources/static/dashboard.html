@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Currency - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; padding: 2rem; border-radius: 15px; width: 400px; max-width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .modal h3 { margin-top: 0; color: var(--sky-dark); }
+        .modal input, .modal select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; box-sizing: border-box; }
+        .modal button { width: 100%; padding: 0.8rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-deposit { background: #27ae60; color: white; }
+        .btn-cancel { background: #95a5a6; color: white; margin-top: 0.5rem; }
+        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+    </style>
 </head>
 <body>
 
@@ -14,6 +28,7 @@
         <a href="dashboard.html" class="active">Dashboard</a>
         <a href="transactions.html">Transactions</a>
         <a href="settings.html">Settings</a>
+        <a href="admin_dashboard.html" id="admin-link" style="display: none; color: #e17055;">Admin</a>
     </div>
     <div class="user-actions">
         <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
@@ -35,7 +50,10 @@
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
         <div class="left-col">
             <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem;">
-                <h3 style="margin-top: 0; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem;">My Wallets</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">My Wallets</h3>
+                    <button onclick="openDepositModal()" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">+ Deposit</button>
+                </div>
                 <div id="wallet-list">
                     <p>Loading wallets...</p>
                 </div>
@@ -54,7 +72,7 @@
                         </tr>
                     </thead>
                     <tbody id="rates-list">
-                        <tr><td colspan="3">Loading rates...</td></tr>
+                        <tr><td colspan="5">Loading rates...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -86,6 +104,40 @@
             </div>
         </div>
     </div>
+
+    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-top: 2rem;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem;">Money Transfer Log (Recent Transactions)</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align: left; color: #7f8c8d; font-size: 0.9rem;">
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Date</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">From</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">To</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Amount</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Fee</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Received</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="transactions-list">
+                <tr><td colspan="7" style="text-align: center; padding: 2rem; color: #95a5a6;">No transactions found</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay" id="deposit-modal">
+    <div class="modal">
+        <h3>Deposit Funds</h3>
+        <label>Currency</label>
+        <select id="deposit-currency"></select>
+        <label>Amount</label>
+        <input type="number" id="deposit-amount" placeholder="Enter amount" min="0.01" step="0.01">
+        <button class="btn-deposit" onclick="handleDeposit()">Deposit</button>
+        <button class="btn-cancel" onclick="closeDepositModal()">Cancel</button>
+        <p id="deposit-msg" style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem;"></p>
+    </div>
 </div>
 
 <footer class="footer">
@@ -94,73 +146,142 @@
         <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
     </div>
     <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved.
+        &copy; 2024 Smart Currency Monitoring &amp; Exchange System. All rights reserved.
     </div>
 </footer>
 
 <script>
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
+    const userRole = localStorage.getItem('role');
 
     if (!token) {
         window.location.href = 'index.html';
     }
 
+    // Show admin link if user is ADMIN
+    if (userRole && userRole.toUpperCase() === 'ADMIN') {
+        document.getElementById('admin-link').style.display = 'inline';
+    }
+
     document.getElementById('welcome-msg').innerText = `Welcome, ${username}!`;
-    document.getElementById('nav-username').innerText = username;
+    const navUserEl = document.getElementById('nav-username');
+    if (navUserEl) navUserEl.innerText = username;
 
     async function fetchData() {
         try {
             const wallRes = await fetch('/api/wallets/my', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!wallRes.ok) {
+                const txt = await wallRes.text();
+                throw new Error(`Wallet fetch failed: ${wallRes.status} - ${txt.substring(0, 50)}`);
+            }
             const wallets = await wallRes.json();
+            
             const wallDiv = document.getElementById('wallet-list');
-            wallDiv.innerHTML = wallets.map(w => `
-                <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--sky-white); border-radius: 10px; margin-bottom: 0.5rem;">
-                    <span style="font-weight: bold; color: var(--premium-blue);">${w.currency.currencyCode}</span>
-                    <span style="font-size: 1.1rem;">${w.balance.toFixed(2)}</span>
-                </div>
-            `).join('');
-            window.allWallets = wallets;
+            if (Array.isArray(wallets)) {
+                if (wallets.length === 0) {
+                    wallDiv.innerHTML = '<p style="color: #95a5a6; font-size: 0.9rem;">No wallets found. Deposit funds to get started!</p>';
+                } else {
+                    wallDiv.innerHTML = wallets.map(w => {
+                        const code = (w.currency && w.currency.currencyCode) ? w.currency.currencyCode : '???';
+                        const bal = (w.balance !== undefined) ? parseFloat(w.balance).toFixed(2) : '0.00';
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--sky-white); border-radius: 10px; margin-bottom: 0.5rem;">
+                                <span style="font-weight: bold; color: var(--premium-blue);">${code}</span>
+                                <span style="font-size: 1.1rem;">${bal}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                window.allWallets = wallets;
+            }
 
             const rateRes = await fetch('/api/currencies', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const rates = await rateRes.json();
-            const ratesBody = document.getElementById('rates-list');
-            ratesBody.innerHTML = rates.map(r => `
-                <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${r.currencyName} (${r.currencyCode})</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${r.currentRate.toFixed(4)}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: var(--premium-blue);" id="conv-${r.currencyCode}">-</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: ${r.trend === 'UP' ? '#27ae60' : (r.trend === 'DOWN' ? '#e74c3c' : '#7f8c8d')}">${r.trend}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><button onclick="setTargetCurrency('${r.currencyCode}')" style="padding: 5px 10px; background: var(--sky-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Exchange</button></td>
-                </tr>
-            `).join('');
-
-            document.getElementById('rate-ticker').innerHTML = rates.map(r => `
-                <span class="ticker-item">💰 ${r.currencyCode}/USD: <strong>${r.currentRate.toFixed(4)}</strong> ${r.trend === 'UP' ? '📈' : (r.trend === 'DOWN' ? '📉' : '➖')}</span>
-            `).join('');
-
-            const fromSel = document.getElementById('from-currency');
-            const toSel = document.getElementById('to-currency');
-            const currentFrom = fromSel.value;
-            const currentTo = toSel.value;
-            const opts = rates.map(r => `<option value="${r.currencyCode}">${r.currencyCode}</option>`).join('');
-            
-            if (fromSel.options.length !== rates.length) {
-                fromSel.innerHTML = opts;
-                toSel.innerHTML = opts;
-                if (currentFrom) fromSel.value = currentFrom;
-                if (currentTo) toSel.value = currentTo;
+            if (!rateRes.ok) {
+                const txt = await rateRes.text();
+                throw new Error(`Rates fetch failed: ${rateRes.status} - ${txt.substring(0, 50)}`);
             }
+            const rates = await rateRes.json();
+            
+            if (Array.isArray(rates)) {
+                const ratesBody = document.getElementById('rates-list');
+                ratesBody.innerHTML = rates.map(r => `
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${r.currencyName} (${r.currencyCode})</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${parseFloat(r.currentRate).toFixed(4)}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: var(--premium-blue);" id="conv-${r.currencyCode}">-</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: ${r.trend === 'UP' ? '#27ae60' : (r.trend === 'DOWN' ? '#e74c3c' : '#7f8c8d')}">${r.trend === 'UP' ? '📈 UP' : (r.trend === 'DOWN' ? '📉 DOWN' : '➖ STABLE')}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><button onclick="setTargetCurrency('${r.currencyCode}')" style="padding: 5px 10px; background: var(--sky-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Exchange</button></td>
+                    </tr>
+                `).join('');
 
-            window.allRates = rates;
-            updateWUInfo();
+                document.getElementById('rate-ticker').innerHTML = rates.map(r => `
+                    <span class="ticker-item">💰 ${r.currencyCode}/USD: <strong>${parseFloat(r.currentRate).toFixed(4)}</strong> ${r.trend === 'UP' ? '📈' : (r.trend === 'DOWN' ? '📉' : '➖')}</span>
+                `).join('');
 
+                const fromSel = document.getElementById('from-currency');
+                const toSel = document.getElementById('to-currency');
+                const depositSel = document.getElementById('deposit-currency');
+                const currentFrom = fromSel.value;
+                const currentTo = toSel.value;
+                const opts = rates.map(r => `<option value="${r.currencyCode}">${r.currencyCode} - ${r.currencyName}</option>`).join('');
+                
+                if (fromSel.options.length !== rates.length) {
+                    fromSel.innerHTML = opts;
+                    toSel.innerHTML = opts;
+                    depositSel.innerHTML = opts;
+                    if (currentFrom) fromSel.value = currentFrom;
+                    if (currentTo) toSel.value = currentTo;
+                }
+
+                window.allRates = rates;
+                updateWUInfo();
+                fetchTransactions();
+            }
         } catch (err) {
             console.error('Failed to fetch data', err);
+            document.getElementById('wallet-list').innerHTML = `<p style="color: red; font-size: 0.8rem;">Sync Error: ${err.message}</p>`;
+            const ratesBody = document.getElementById('rates-list');
+            if (ratesBody) ratesBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
+        }
+    }
+
+    async function fetchTransactions() {
+        const res = await fetch('/api/transactions/my', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const txs = await res.json();
+            const list = document.getElementById('transactions-list');
+            if (!txs || txs.length === 0) {
+                list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #95a5a6;">No transactions yet. Start exchanging!</td></tr>';
+                return;
+            }
+            list.innerHTML = txs.slice(0, 10).map(t => {
+                const date = new Date(t.transactionDate).toLocaleString();
+                const fromCode = (t.fromCurrency && t.fromCurrency.currencyCode) ? t.fromCurrency.currencyCode : '???';
+                const toCode = (t.toCurrency && t.toCurrency.currencyCode) ? t.toCurrency.currencyCode : '???';
+                const amount = t.amount !== undefined ? parseFloat(t.amount).toFixed(2) : '0.00';
+                const fee = t.fee !== undefined && t.fee !== null ? parseFloat(t.fee).toFixed(2) : '0.00';
+                const converted = t.convertedAmount !== undefined && t.convertedAmount !== null ? parseFloat(t.convertedAmount).toFixed(2) : '-';
+                const status = t.status || 'PENDING';
+                const statusClass = status === 'COMPLETED' ? 'status-completed' : (status === 'FAILED' ? 'status-failed' : 'status-pending');
+                return `
+                    <tr>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-size: 0.85rem; color: #7f8c8d;">${date}</td>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-weight: 600;">${fromCode}</td>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-weight: 600;">${toCode}</td>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9;">${amount} ${fromCode}</td>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; color: #e17055;">${fee} ${fromCode}</td>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-weight: bold; color: #27ae60;">${status === 'COMPLETED' ? '+' + converted + ' ' + toCode : '-'}</td>
+                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9;"><span class="status-badge ${statusClass}">${status}</span></td>
+                    </tr>
+                `;
+            }).join('');
         }
     }
 
@@ -176,6 +297,15 @@
             return;
         }
 
+        if (from === to) {
+            msg.innerText = 'Source and target currencies must be different.';
+            msg.style.color = 'red';
+            return;
+        }
+
+        msg.innerText = 'Processing...';
+        msg.style.color = '#7f8c8d';
+
         const res = await fetch('/api/transactions/exchange', {
             method: 'POST',
             headers: { 
@@ -186,29 +316,45 @@
         });
 
         if (res.ok) {
-            msg.innerText = 'Exchange successful!';
+            const result = await res.json();
+            msg.innerHTML = `✅ Exchange successful! You received <strong>${parseFloat(result.convertedAmount).toFixed(2)} ${result.to}</strong> (Fee: ${parseFloat(result.fee).toFixed(2)} ${result.from})`;
             msg.style.color = 'green';
+            document.getElementById('ex-amount').value = '';
             fetchData();
         } else {
-            const err = await res.text();
-            msg.innerText = 'Failed: ' + err;
+            const err = await res.json().catch(() => ({ error: 'Exchange failed' }));
+            msg.innerText = '❌ ' + (err.error || 'Exchange failed');
             msg.style.color = 'red';
         }
     }
 
     function updateWUInfo() {
-        const amt = parseFloat(document.getElementById('ex-amount').value);
-        const fromCode = document.getElementById('from-currency').value;
-        const toCode = document.getElementById('to-currency').value;
+        const amtInput = document.getElementById('ex-amount');
+        const fromSel = document.getElementById('from-currency');
+        const toSel = document.getElementById('to-currency');
+        
+        if (!amtInput || !fromSel || !toSel) return;
+        
+        const amt = parseFloat(amtInput.value);
+        const fromCode = fromSel.value;
+        const toCode = toSel.value;
         const wuCard = document.getElementById('wu-card');
 
-        if (!amt || amt <= 0 || !window.allRates) {
-            wuCard.style.display = 'none';
+        if (!window.allRates || !fromCode || !toCode || !amt || amt <= 0) {
+            if (wuCard) wuCard.style.display = 'none';
             return;
         }
 
-        const fromRate = window.allRates.find(r => r.currencyCode === fromCode).currentRate;
-        const toRate = window.allRates.find(r => r.currencyCode === toCode).currentRate;
+        const fromCurr = window.allRates.find(r => r.currencyCode === fromCode);
+        const toCurr = window.allRates.find(r => r.currencyCode === toCode);
+        
+        if (!fromCurr || !toCurr) {
+            if (wuCard) wuCard.style.display = 'none';
+            return;
+        }
+
+        const fromRate = parseFloat(fromCurr.currentRate);
+        const toRate = parseFloat(toCurr.currentRate);
         const crossRate = toRate / fromRate;
 
         const fee = amt * 0.01;
@@ -223,15 +369,17 @@
         window.allRates.forEach(r => {
             const el = document.getElementById(`conv-${r.currencyCode}`);
             if (el) {
-                const targetRate = r.currentRate / fromRate;
+                const targetRate = parseFloat(r.currentRate) / fromRate;
                 const convVal = (amt - fee) * targetRate;
                 el.innerText = convVal.toFixed(2);
             }
         });
 
         // Update balance display
-        const wall = window.allWallets.find(w => w.currency.currencyCode === fromCode);
-        document.getElementById('from-balance').innerText = `Balance: ${wall ? wall.balance.toFixed(2) : '0.00'}`;
+        if (window.allWallets) {
+            const wall = window.allWallets.find(w => w.currency && w.currency.currencyCode === fromCode);
+            document.getElementById('from-balance').innerText = `Balance: ${wall ? parseFloat(wall.balance).toFixed(2) : '0.00'}`;
+        }
     }
 
     function setTargetCurrency(code) {
@@ -240,13 +388,54 @@
         document.getElementById('ex-amount').focus();
     }
 
+    // Deposit modal functions
+    function openDepositModal() {
+        document.getElementById('deposit-modal').classList.add('active');
+        document.getElementById('deposit-msg').innerText = '';
+    }
+    function closeDepositModal() {
+        document.getElementById('deposit-modal').classList.remove('active');
+    }
+    async function handleDeposit() {
+        const currency = document.getElementById('deposit-currency').value;
+        const amount = parseFloat(document.getElementById('deposit-amount').value);
+        const msg = document.getElementById('deposit-msg');
+
+        if (!amount || amount <= 0) {
+            msg.innerText = 'Enter a valid amount.';
+            msg.style.color = 'red';
+            return;
+        }
+
+        const res = await fetch('/api/wallets/deposit', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ currencyCode: currency, amount: amount })
+        });
+
+        if (res.ok) {
+            msg.innerText = '✅ Deposit successful!';
+            msg.style.color = 'green';
+            document.getElementById('deposit-amount').value = '';
+            fetchData();
+            setTimeout(closeDepositModal, 1000);
+        } else {
+            const err = await res.json().catch(() => ({ error: 'Deposit failed' }));
+            msg.innerText = '❌ ' + (err.error || 'Deposit failed');
+            msg.style.color = 'red';
+        }
+    }
+
     function logout() {
         localStorage.clear();
         window.location.href = 'index.html';
     }
 
     fetchData();
-    setInterval(fetchData, 10000);
+    setInterval(fetchData, 15000);
 </script>
 
 </body>

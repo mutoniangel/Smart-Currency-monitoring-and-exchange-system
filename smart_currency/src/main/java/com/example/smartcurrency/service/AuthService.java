@@ -33,17 +33,26 @@ public class AuthService {
             throw new RuntimeException("Username already exists");
         }
 
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already registered");
+        }
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setRole("USER");
+        user.setEnabled(true);
 
         User savedUser = userRepository.save(user);
 
-        // Initialize default wallet with 1000 USD starting balance
+        // Initialize default wallets with starting balances
         currencyRepository.findById("USD").ifPresent(currency -> {
             Wallet wallet = new Wallet(savedUser, currency, new BigDecimal("1000.00"));
+            walletRepository.save(wallet);
+        });
+        currencyRepository.findById("RWF").ifPresent(currency -> {
+            Wallet wallet = new Wallet(savedUser, currency, new BigDecimal("50000.00"));
             walletRepository.save(wallet);
         });
 
@@ -52,6 +61,7 @@ public class AuthService {
 
     public Optional<User> authenticate(LoginRequest request) {
         return userRepository.findByUsername(request.getUsername())
+                .filter(User::isEnabled)
                 .filter(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()));
     }
 }

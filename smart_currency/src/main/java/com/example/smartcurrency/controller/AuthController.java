@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,18 +36,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestParam String sessionId, @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@RequestParam String sessionId, @Valid @RequestBody RegisterRequest request) {
         if (!captchaService.verifyCaptcha(sessionId, request.getCaptchaAnswer())) {
-            return ResponseEntity.badRequest().body("Invalid CAPTCHA answer");
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid CAPTCHA answer"));
         }
         authService.registerUser(request);
         return ResponseEntity.ok("User registered successfully. You can now login.");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String sessionId, @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestParam String sessionId, @Valid @RequestBody LoginRequest request) {
         if (!captchaService.verifyCaptcha(sessionId, request.getCaptchaAnswer())) {
-            return ResponseEntity.badRequest().body("Invalid CAPTCHA answer");
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid CAPTCHA answer"));
         }
         return authService.authenticate(request)
                 .map(user -> {

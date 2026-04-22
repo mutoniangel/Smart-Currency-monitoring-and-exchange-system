@@ -3,6 +3,7 @@ package com.example.smartcurrency.model;
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "Users")
@@ -28,6 +29,7 @@ public class User {
     private boolean enabled = true;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Wallet> wallets = new ArrayList<>();
 
     public User() {}

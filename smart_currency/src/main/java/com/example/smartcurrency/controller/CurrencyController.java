@@ -18,4 +18,12 @@ public class CurrencyController {
     public ResponseEntity<List<Currency>> getCurrencies() {
         return ResponseEntity.ok(currencyService.getAllCurrencies());
     }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<Currency>> filterCurrencies(
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String trend
+    ) {
+        return ResponseEntity.ok(currencyService.filterCurrencies(code, trend));
+    }
 }

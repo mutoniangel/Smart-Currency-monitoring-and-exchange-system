@@ -14,6 +14,7 @@ public class Currency {
     private String currencyName;
 
     @Column(name = "current_rate", nullable = false, precision = 10, scale = 4)
+    @jakarta.validation.constraints.DecimalMin(value = "0.0001", message = "Exchange rate must be positive")
     private BigDecimal currentRate;
 
     @Column(name = "trend", length = 20)

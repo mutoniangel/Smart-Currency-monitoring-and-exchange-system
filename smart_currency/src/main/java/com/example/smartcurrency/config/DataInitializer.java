@@ -93,15 +93,18 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Fix missing wallets for existing users
-        currencyRepository.findById("USD").ifPresent(usd -> {
-            userRepository.findAll().forEach(user -> {
-                if (!user.isEnabled()) {
-                    user.setEnabled(true);
-                    userRepository.save(user);
-                }
-                if (walletRepository.findByUserAndCurrency(user, usd).isEmpty()) {
-                    System.out.println("Initializing USD wallet for user: " + user.getUsername());
-                    Wallet wallet = new Wallet(user, usd, new BigDecimal("1000.00"));
+        ensureWallet("admin", "USD", new BigDecimal("1000.00"));
+        ensureWallet("admin", "RWF", new BigDecimal("100000.00"));
+        ensureWallet("admin", "EUR", new BigDecimal("500.00"));
+        ensureWallet("admin", "KES", new BigDecimal("10000.00"));
+    }
+
+    private void ensureWallet(String username, String currencyCode, BigDecimal initialBalance) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            currencyRepository.findById(currencyCode).ifPresent(currency -> {
+                if (walletRepository.findByUserAndCurrency(user, currency).isEmpty()) {
+                    System.out.println("Initializing " + currencyCode + " wallet for user: " + username);
+                    Wallet wallet = new Wallet(user, currency, initialBalance);
                     walletRepository.save(wallet);
                 }
             });
