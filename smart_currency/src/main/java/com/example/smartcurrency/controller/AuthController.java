@@ -50,11 +50,11 @@ public class AuthController {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid CAPTCHA answer"));
         }
         return authService.authenticate(request)
-                .map(user -> {
+                .<ResponseEntity<?>>map(user -> {
                     String token = jwtUtil.generateToken(user.getUsername(), "ROLE_" + user.getRole().toUpperCase());
                     return ResponseEntity.ok(new AuthResponse(token, user.getUsername(), user.getRole()));
                 })
-                .orElse(ResponseEntity.status(401).build());
+                .orElse(ResponseEntity.status(401).body(java.util.Map.of("error", "Incorrect username or password")));
     }
 
     @GetMapping("/me")
@@ -79,5 +79,16 @@ public class AuthController {
                     return ResponseEntity.ok("Profile updated");
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody com.example.smartcurrency.dto.ResetPasswordRequest request) {
+        return userRepository.findByUsername(request.getUsername())
+                .map(user -> {
+                    user.setPassword(new BCryptPasswordEncoder().encode(request.getNewPassword()));
+                    userRepository.save(user);
+                    return ResponseEntity.ok(java.util.Map.of("message", "Password reset successfully. You can now login."));
+                })
+                .orElse(ResponseEntity.badRequest().body(java.util.Map.of("error", "User not found")));
     }
 }

@@ -6,8 +6,8 @@ com\example\smartcurrency\repository\AdminRepository.class
 com\example\smartcurrency\dto\LoginRequest.class
 com\example\smartcurrency\service\TransactionService.class
 com\example\smartcurrency\controller\CurrencyController.class
+com\example\smartcurrency\dto\ResetPasswordRequest.class
 com\example\smartcurrency\model\Transaction.class
-com\example\smartcurrency\controller\AuthController.class
 com\example\smartcurrency\service\WalletService.class
 com\example\smartcurrency\controller\AdminController.class
 com\example\smartcurrency\security\SecurityConfig.class

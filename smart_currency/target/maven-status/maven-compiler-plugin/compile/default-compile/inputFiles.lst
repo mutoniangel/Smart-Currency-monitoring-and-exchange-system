@@ -7,12 +7,14 @@ D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\co
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\dto\AuthResponse.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\dto\LoginRequest.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\dto\RegisterRequest.java
+D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\dto\ResetPasswordRequest.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\dto\TransactionRequest.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\exception\GlobalExceptionHandler.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\Admin.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\Currency.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\Transaction.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\TransactionStatus.java
+D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\TransactionType.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\User.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\model\Wallet.java
 D:\Smart-Currency-monitoring-and-exchange-system\smart_currency\src\main\java\com\example\smartcurrency\repository\AdminRepository.java

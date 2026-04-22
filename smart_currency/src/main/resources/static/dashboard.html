@@ -4,193 +4,408 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Currency - Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2e7d32',
+                        primaryLight: '#4caf50',
+                        secondary: '#1b5e20',
+                        accent: '#27ae60',
+                        dark: '#333333',
+                        light: '#f0f2f5'
+                    },
+                    animation: {
+                        'marquee': 'marquee 25s linear infinite',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-overlay.active { display: flex; }
-        .modal { background: white; padding: 2rem; border-radius: 15px; width: 400px; max-width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-        .modal h3 { margin-top: 0; color: var(--sky-dark); }
-        .modal input, .modal select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; box-sizing: border-box; }
-        .modal button { width: 100%; padding: 0.8rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-deposit { background: #27ae60; color: white; }
-        .btn-cancel { background: #95a5a6; color: white; margin-top: 0.5rem; }
-        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .status-completed { background: #d4edda; color: #155724; }
-        .status-failed { background: #f8d7da; color: #721c24; }
-        .status-pending { background: #fff3cd; color: #856404; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .table-container::-webkit-scrollbar { height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .ticker-wrapper { overflow: hidden; white-space: nowrap; }
     </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
 
-<nav class="navbar">
-    <a href="dashboard.html" class="brand">Smart Currency</a>
-    <div class="nav-links">
-        <a href="dashboard.html" class="active">Dashboard</a>
-        <a href="transactions.html">Transactions</a>
-        <a href="settings.html">Settings</a>
-        <a href="admin_dashboard.html" id="admin-link" style="display: none; color: #e17055;">Admin</a>
-    </div>
-    <div class="user-actions">
-        <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+<!-- Navbar -->
+<nav class="bg-secondary text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="dashboard.html" class="flex-shrink-0 flex items-center text-xl font-bold text-white tracking-wide">
+                    <i class="fa-solid fa-money-bill-trend-up text-primaryLight mr-2"></i> Smart Currency
+                </a>
+                <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
+                    <a href="dashboard.html" class="border-primaryLight text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</a>
+                    <a href="transactions.html" class="border-transparent text-gray-300 hover:text-white hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Transactions</a>
+                    <a href="settings.html" class="border-transparent text-gray-300 hover:text-white hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Settings</a>
+                    <a href="admin_dashboard.html" id="admin-link" style="display: none;" class="border-transparent text-orange-400 hover:text-orange-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Admin Panel</a>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center space-x-4">
+                    <span id="nav-username" class="font-semibold text-sm">User</span>
+                    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="ticker-wrapper">
-    <div class="ticker-content" id="rate-ticker">
-        Loading live market rates...
+<!-- Live Rates Ticker -->
+<div class="bg-dark text-white py-2 shadow-inner border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ticker-wrapper relative flex items-center h-6">
+        <div class="absolute left-0 bg-gradient-to-r from-dark to-transparent w-8 h-full z-10"></div>
+        <div class="animate-marquee inline-block text-sm font-medium" id="rate-ticker">
+            Loading live market rates...
+        </div>
+        <div class="absolute right-0 bg-gradient-to-l from-dark to-transparent w-8 h-full z-10"></div>
     </div>
 </div>
 
-<div class="container">
-    <header style="margin-bottom: 2rem;">
-        <h2 id="welcome-msg">Welcome, User!</h2>
+<!-- Main Content -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <header class="mb-8 flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" id="welcome-msg">Welcome, User!</h1>
+            <p class="text-gray-500 mt-1">Here is a summary of your digital assets and live market data.</p>
+        </div>
     </header>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-        <div class="left-col">
-            <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                    <h3 style="margin: 0;">My Wallets</h3>
-                    <button onclick="openDepositModal()" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">+ Deposit</button>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column (Wallets & Rates) -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- Wallets Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-primaryLight opacity-10 rounded-full blur-xl"></div>
+                
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-wallet text-primary mr-2"></i> My Wallets
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button onclick="openDepositModal()" class="bg-primary hover:bg-primaryLight text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-transform transform hover:scale-105 flex items-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Deposit
+                        </button>
+                        <button onclick="openWithdrawModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-transform transform hover:scale-105 flex items-center">
+                            <i class="fa-solid fa-minus mr-2"></i> Withdraw
+                        </button>
+                    </div>
                 </div>
-                <div id="wallet-list">
-                    <p>Loading wallets...</p>
+                
+                <div id="wallet-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-xl text-center text-gray-500 col-span-full">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading wallets...
+                    </div>
                 </div>
             </div>
 
-            <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <h3 style="margin-top: 0; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem;">Live Exchange Rates</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align: left;">
-                            <th style="padding: 10px; border-bottom: 1px solid #eee;">Currency</th>
-                            <th style="padding: 10px; border-bottom: 1px solid #eee;">Rate (to USD)</th>
-                            <th style="padding: 10px; border-bottom: 1px solid #eee;">Converted</th>
-                            <th style="padding: 10px; border-bottom: 1px solid #eee;">Trend</th>
-                            <th style="padding: 10px; border-bottom: 1px solid #eee;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rates-list">
-                        <tr><td colspan="5">Loading rates...</td></tr>
-                    </tbody>
-                </table>
+            <!-- Live Exchange Rates Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex justify-between items-center mb-4 border-b pb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-globe text-blue-500 mr-2"></i> Live Exchange Rates
+                    </h2>
+                </div>
+                <div class="overflow-x-auto table-container">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Currency</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Rate (USD)</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Your Value</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Trend</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rates-list" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">Loading rates...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div class="right-col">
-            <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <h3 style="margin-top: 0; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem;">Quick Exchange</h3>
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <label>From <span id="from-balance" style="float: right; font-weight: normal; color: #7f8c8d; font-size: 0.8rem;">Balance: 0.00</span></label>
-                    <select id="from-currency" onchange="updateWUInfo()" style="padding: 0.8rem; border-radius: 8px; border: 1px solid #ddd;"></select>
-                    
-                    <label>To</label>
-                    <select id="to-currency" onchange="updateWUInfo()" style="padding: 0.8rem; border-radius: 8px; border: 1px solid #ddd;"></select>
-
-                    <label>Amount</label>
-                    <input type="number" id="ex-amount" placeholder="0.00" oninput="updateWUInfo()" style="padding: 0.8rem; border-radius: 8px; border: 1px solid #ddd;">
-
-                    <div id="wu-card" style="background: #f1f2f6; padding: 1rem; border-radius: 8px; font-size: 0.85rem; color: #57606f; display: none;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;"><span>Exchange Rate</span> <span id="wu-rate" style="font-weight: bold; color: var(--sky-dark);">-</span></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;"><span>Transfer Fee (1%)</span> <span id="wu-fee" style="font-weight: bold; color: var(--sky-dark);">-</span></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;"><span>Estimated Arrival</span> <span style="font-weight: bold; color: var(--sky-dark);">Instantly</span></div>
-                        <div style="display: flex; justify-content: space-between; color: #27ae60; border-top: 1px solid #ccc; padding-top: 0.5rem; font-size: 1rem;"><span>Receiver Gets</span> <span id="wu-gets" style="font-weight: bold;">-</span></div>
+        <!-- Right Column (Quick Exchange) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center mb-6 border-b pb-4">
+                    <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i> Quick Exchange
+                </h2>
+                
+                <div class="space-y-5">
+                    <!-- From -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="block text-sm font-semibold text-gray-700">From</label>
+                            <span id="from-balance" class="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded">Balance: 0.00</span>
+                        </div>
+                        <div class="relative">
+                            <select id="from-currency" onchange="updateWUInfo()" class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg border bg-gray-50 font-medium"></select>
+                        </div>
                     </div>
 
-                    <button onclick="handleExchange()" style="background: var(--premium-blue); color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; font-weight: bold;">Exchange Now</button>
-                    <p id="ex-msg" style="text-align: center; font-size: 0.9rem;"></p>
+                    <!-- Swap Icon -->
+                    <div class="flex justify-center -my-2 relative z-10">
+                        <button onclick="swapCurrencies()" class="bg-white border border-gray-200 rounded-full p-2 text-gray-400 hover:text-primary hover:border-primary shadow-sm transition-colors focus:outline-none">
+                            <i class="fa-solid fa-arrow-down-up-across-line"></i>
+                        </button>
+                    </div>
+
+                    <!-- To -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">To</label>
+                        <select id="to-currency" onchange="updateWUInfo()" class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-lg border bg-gray-50 font-medium"></select>
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Amount</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <input type="number" id="ex-amount" placeholder="0.00" oninput="updateWUInfo()" class="focus:ring-primary focus:border-primary block w-full pl-4 pr-12 py-3 sm:text-lg border-gray-300 rounded-lg border font-bold text-gray-900 outline-none">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm font-bold" id="amt-currency-label"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculation Card -->
+                    <div id="wu-card" class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 hidden">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600">Exchange Rate</span>
+                            <span id="wu-rate" class="font-bold text-gray-800">-</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600">Transfer Fee (1%)</span>
+                            <span id="wu-fee" class="font-bold text-red-500">-</span>
+                        </div>
+                        <div class="border-t border-blue-200 my-2 pt-2 flex justify-between items-center">
+                            <span class="text-sm font-bold text-gray-700">You Receive</span>
+                            <span id="wu-gets" class="text-lg font-black text-accent">-</span>
+                        </div>
+                    </div>
+
+                    <button onclick="handleExchange()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-right-left mr-2"></i> Exchange Now
+                    </button>
+                    <p id="ex-msg" class="text-center text-sm font-medium min-h-[20px]"></p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-top: 2rem;">
-        <h3 style="margin-top: 0; border-bottom: 2px solid var(--sky-white); padding-bottom: 0.5rem;">Money Transfer Log (Recent Transactions)</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #7f8c8d; font-size: 0.9rem;">
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Date</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">From</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">To</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Amount</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Fee</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Received</th>
-                    <th style="padding: 10px; border-bottom: 1px solid #eee;">Status</th>
-                </tr>
-            </thead>
-            <tbody id="transactions-list">
-                <tr><td colspan="7" style="text-align: center; padding: 2rem; color: #95a5a6;">No transactions found</td></tr>
-            </tbody>
-        </table>
+    <!-- Recent Transactions -->
+    <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-4 border-b pb-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                <i class="fa-solid fa-clock-rotate-left text-gray-500 mr-2"></i> Recent Transactions
+            </h2>
+            <a href="transactions.html" class="text-sm font-medium text-primary hover:text-secondary transition-colors">View All &rarr;</a>
+        </div>
+        <div class="overflow-x-auto table-container">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fee</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Received</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-list" class="bg-white divide-y divide-gray-200">
+                    <tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Loading transactions...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 
-<!-- Deposit Modal -->
-<div class="modal-overlay" id="deposit-modal">
-    <div class="modal">
-        <h3>Deposit Funds</h3>
-        <label>Currency</label>
-        <select id="deposit-currency"></select>
-        <label>Amount</label>
-        <input type="number" id="deposit-amount" placeholder="Enter amount" min="0.01" step="0.01">
-        <button class="btn-deposit" onclick="handleDeposit()">Deposit</button>
-        <button class="btn-cancel" onclick="closeDepositModal()">Cancel</button>
-        <p id="deposit-msg" style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem;"></p>
-    </div>
-</div>
+</main>
 
-<footer class="footer">
-    <div class="support-info">
-        <span>📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a></span>
-        <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
-    </div>
-    <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring &amp; Exchange System. All rights reserved.
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+        <div class="text-sm text-gray-500 mb-4 md:mb-0">
+            &copy; 2024 Smart Currency System. All rights reserved.
+        </div>
+        <div class="flex space-x-6 text-sm">
+            <a href="mailto:mutoniangel2005@gmail.com" class="text-gray-400 hover:text-gray-900 transition-colors"><i class="fa-solid fa-envelope mr-1"></i> Support</a>
+            <a href="tel:0798052603" class="text-gray-400 hover:text-gray-900 transition-colors"><i class="fa-solid fa-phone mr-1"></i> Contact</a>
+        </div>
     </div>
 </footer>
+
+<!-- Deposit Modal -->
+<div id="deposit-modal" class="fixed z-50 inset-0 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeDepositModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fa-solid fa-money-bill-wave text-green-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900">Deposit Funds</h3>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                                <select id="deposit-method" onchange="updateDepositPlaceholder()" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md border bg-gray-50">
+                                    <option value="momo">Mobile Money (MoMo)</option>
+                                    <option value="bank">Bank Transfer</option>
+                                    <option value="card">Credit/Debit Card</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label id="deposit-account-label" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input type="text" id="deposit-account" placeholder="e.g., 078XXXXXXX" class="focus:ring-primary focus:border-primary block w-full px-3 py-2 sm:text-sm border-gray-300 rounded-md border outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                                <select id="deposit-currency" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md border bg-gray-50"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <input type="number" id="deposit-amount" placeholder="0.00" min="0.01" step="0.01" class="focus:ring-primary focus:border-primary block w-full px-3 py-2 sm:text-sm border-gray-300 rounded-md border outline-none">
+                                </div>
+                            </div>
+                            <p id="deposit-msg" class="text-sm font-medium text-center"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100">
+                <button type="button" id="confirm-deposit-btn" onclick="handleDeposit()" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    Confirm Deposit
+                </button>
+                <button type="button" onclick="closeDepositModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div id="withdraw-modal" class="fixed z-50 inset-0 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeWithdrawModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fa-solid fa-money-bill-transfer text-blue-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900">Withdraw Funds</h3>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Withdraw To</label>
+                                <select id="withdraw-method" onchange="updateWithdrawPlaceholder()" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md border bg-gray-50">
+                                    <option value="momo">Mobile Money (MoMo)</option>
+                                    <option value="bank">Bank Account</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label id="withdraw-account-label" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input type="text" id="withdraw-account" placeholder="e.g., 078XXXXXXX" class="focus:ring-primary focus:border-primary block w-full px-3 py-2 sm:text-sm border-gray-300 rounded-md border outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">From Wallet</label>
+                                <select id="withdraw-currency" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md border bg-gray-50"></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <input type="number" id="withdraw-amount" placeholder="0.00" min="0.01" step="0.01" class="focus:ring-primary focus:border-primary block w-full px-3 py-2 sm:text-sm border-gray-300 rounded-md border outline-none">
+                                </div>
+                            </div>
+                            <p id="withdraw-msg" class="text-sm font-medium text-center"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100">
+                <button type="button" id="confirm-withdraw-btn" onclick="handleWithdraw()" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    Confirm Withdrawal
+                </button>
+                <button type="button" onclick="closeWithdrawModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
     const userRole = localStorage.getItem('role');
 
-    if (!token) {
-        window.location.href = 'index.html';
-    }
+    if (!token) window.location.href = 'index.html';
 
-    // Show admin link if user is ADMIN
     if (userRole && userRole.toUpperCase() === 'ADMIN') {
-        document.getElementById('admin-link').style.display = 'inline';
+        document.getElementById('admin-link').style.display = 'inline-flex';
     }
 
-    document.getElementById('welcome-msg').innerText = `Welcome, ${username}!`;
+    document.getElementById('welcome-msg').innerText = `Welcome back, ${username}!`;
     const navUserEl = document.getElementById('nav-username');
     if (navUserEl) navUserEl.innerText = username;
 
     async function fetchData() {
         try {
-            const wallRes = await fetch('/api/wallets/my', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!wallRes.ok) {
-                const txt = await wallRes.text();
-                throw new Error(`Wallet fetch failed: ${wallRes.status} - ${txt.substring(0, 50)}`);
-            }
+            // Fetch Wallets
+            const wallRes = await fetch('/api/wallets/my', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!wallRes.ok) throw new Error(`Wallet fetch failed`);
             const wallets = await wallRes.json();
             
             const wallDiv = document.getElementById('wallet-list');
             if (Array.isArray(wallets)) {
                 if (wallets.length === 0) {
-                    wallDiv.innerHTML = '<p style="color: #95a5a6; font-size: 0.9rem;">No wallets found. Deposit funds to get started!</p>';
+                    wallDiv.innerHTML = '<div class="col-span-full p-6 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">No wallets found. Deposit funds to get started!</div>';
                 } else {
-                    wallDiv.innerHTML = wallets.map(w => {
+                    wallDiv.innerHTML = wallets.map((w, index) => {
                         const code = (w.currency && w.currency.currencyCode) ? w.currency.currencyCode : '???';
                         const bal = (w.balance !== undefined) ? parseFloat(w.balance).toFixed(2) : '0.00';
+                        const gradients = [
+                            'from-green-500 to-green-700',
+                            'from-blue-500 to-blue-700',
+                            'from-purple-500 to-purple-700',
+                            'from-orange-500 to-orange-700'
+                        ];
+                        const bgClass = gradients[index % gradients.length];
+                        
                         return `
-                            <div style="display: flex; justify-content: space-between; padding: 1rem; background: var(--sky-white); border-radius: 10px; margin-bottom: 0.5rem;">
-                                <span style="font-weight: bold; color: var(--premium-blue);">${code}</span>
-                                <span style="font-size: 1.1rem;">${bal}</span>
+                            <div class="relative bg-gradient-to-br ${bgClass} rounded-xl p-5 text-white shadow-md overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg">
+                                <div class="absolute right-0 top-0 opacity-10 text-6xl -mr-4 -mt-4"><i class="fa-solid fa-coins"></i></div>
+                                <div class="text-xs font-semibold text-white/80 uppercase tracking-wider mb-1">${code} Wallet</div>
+                                <div class="text-2xl font-black tracking-tight">${bal} <span class="text-sm font-medium opacity-75">${code}</span></div>
                             </div>
                         `;
                     }).join('');
@@ -198,42 +413,60 @@
                 window.allWallets = wallets;
             }
 
-            const rateRes = await fetch('/api/currencies', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!rateRes.ok) {
-                const txt = await rateRes.text();
-                throw new Error(`Rates fetch failed: ${rateRes.status} - ${txt.substring(0, 50)}`);
-            }
+            // Fetch Rates
+            const rateRes = await fetch('/api/currencies', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!rateRes.ok) throw new Error(`Rates fetch failed`);
             const rates = await rateRes.json();
             
             if (Array.isArray(rates)) {
                 const ratesBody = document.getElementById('rates-list');
-                ratesBody.innerHTML = rates.map(r => `
-                    <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${r.currencyName} (${r.currencyCode})</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${parseFloat(r.currentRate).toFixed(4)}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: var(--premium-blue);" id="conv-${r.currencyCode}">-</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: ${r.trend === 'UP' ? '#27ae60' : (r.trend === 'DOWN' ? '#e74c3c' : '#7f8c8d')}">${r.trend === 'UP' ? '📈 UP' : (r.trend === 'DOWN' ? '📉 DOWN' : '➖ STABLE')}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><button onclick="setTargetCurrency('${r.currencyCode}')" style="padding: 5px 10px; background: var(--sky-blue); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Exchange</button></td>
-                    </tr>
-                `).join('');
+                ratesBody.innerHTML = rates.map(r => {
+                    let trendHtml = '';
+                    if (r.trend === 'UP') trendHtml = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fa-solid fa-arrow-trend-up mr-1"></i> UP</span>';
+                    else if (r.trend === 'DOWN') trendHtml = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fa-solid fa-arrow-trend-down mr-1"></i> DOWN</span>';
+                    else trendHtml = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><i class="fa-solid fa-minus mr-1"></i> STABLE</span>';
 
-                document.getElementById('rate-ticker').innerHTML = rates.map(r => `
-                    <span class="ticker-item">💰 ${r.currencyCode}/USD: <strong>${parseFloat(r.currentRate).toFixed(4)}</strong> ${r.trend === 'UP' ? '📈' : (r.trend === 'DOWN' ? '📉' : '➖')}</span>
-                `).join('');
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors group">
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    ${r.currencyCode.charAt(0)}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-gray-900">${r.currencyCode}</div>
+                                    <div class="text-xs text-gray-500">${r.currencyName}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${parseFloat(r.currentRate).toFixed(4)}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold text-primary" id="conv-${r.currencyCode}">-</td>
+                        <td class="px-4 py-4 whitespace-nowrap">${trendHtml}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="setTargetCurrency('${r.currencyCode}')" class="text-accent hover:text-white hover:bg-accent px-3 py-1.5 rounded-md border border-accent transition-colors shadow-sm bg-green-50">Exchange</button>
+                        </td>
+                    </tr>
+                `}).join('');
+
+                document.getElementById('rate-ticker').innerHTML = rates.map(r => {
+                    const icon = r.trend === 'UP' ? '<span class="text-green-400">▲</span>' : (r.trend === 'DOWN' ? '<span class="text-red-400">▼</span>' : '<span class="text-gray-400">➖</span>');
+                    return `<span class="mx-6"><span class="font-bold">${r.currencyCode}/USD:</span> ${parseFloat(r.currentRate).toFixed(4)} ${icon}</span>`;
+                }).join(' • ');
 
                 const fromSel = document.getElementById('from-currency');
                 const toSel = document.getElementById('to-currency');
                 const depositSel = document.getElementById('deposit-currency');
+                const withdrawSel = document.getElementById('withdraw-currency');
                 const currentFrom = fromSel.value;
                 const currentTo = toSel.value;
+                
                 const opts = rates.map(r => `<option value="${r.currencyCode}">${r.currencyCode} - ${r.currencyName}</option>`).join('');
                 
                 if (fromSel.options.length !== rates.length) {
                     fromSel.innerHTML = opts;
                     toSel.innerHTML = opts;
                     depositSel.innerHTML = opts;
+                    withdrawSel.innerHTML = opts;
                     if (currentFrom) fromSel.value = currentFrom;
                     if (currentTo) toSel.value = currentTo;
                 }
@@ -244,45 +477,65 @@
             }
         } catch (err) {
             console.error('Failed to fetch data', err);
-            document.getElementById('wallet-list').innerHTML = `<p style="color: red; font-size: 0.8rem;">Sync Error: ${err.message}</p>`;
-            const ratesBody = document.getElementById('rates-list');
-            if (ratesBody) ratesBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
         }
     }
 
     async function fetchTransactions() {
-        const res = await fetch('/api/transactions/my', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/transactions/my', { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
             const txs = await res.json();
             const list = document.getElementById('transactions-list');
             if (!txs || txs.length === 0) {
-                list.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #95a5a6;">No transactions yet. Start exchanging!</td></tr>';
+                list.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No transactions yet. Start exchanging!</td></tr>';
                 return;
             }
-            list.innerHTML = txs.slice(0, 10).map(t => {
+            list.innerHTML = txs.slice(0, 8).map(t => {
                 const date = new Date(t.transactionDate).toLocaleString();
-                const fromCode = (t.fromCurrency && t.fromCurrency.currencyCode) ? t.fromCurrency.currencyCode : '???';
-                const toCode = (t.toCurrency && t.toCurrency.currencyCode) ? t.toCurrency.currencyCode : '???';
-                const amount = t.amount !== undefined ? parseFloat(t.amount).toFixed(2) : '0.00';
-                const fee = t.fee !== undefined && t.fee !== null ? parseFloat(t.fee).toFixed(2) : '0.00';
-                const converted = t.convertedAmount !== undefined && t.convertedAmount !== null ? parseFloat(t.convertedAmount).toFixed(2) : '-';
+                const type = t.transactionType || 'EXCHANGE';
+                const fromCode = t.fromCurrency ? t.fromCurrency.currencyCode : '-';
+                const toCode = t.toCurrency ? t.toCurrency.currencyCode : '-';
+                const amount = t.amount ? parseFloat(t.amount).toFixed(2) : '0.00';
+                const fee = t.fee ? parseFloat(t.fee).toFixed(2) : '0.00';
+                const converted = t.convertedAmount ? parseFloat(t.convertedAmount).toFixed(2) : '0.00';
+                
                 const status = t.status || 'PENDING';
-                const statusClass = status === 'COMPLETED' ? 'status-completed' : (status === 'FAILED' ? 'status-failed' : 'status-pending');
+                let statusBadge = '';
+                if(status === 'COMPLETED') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">COMPLETED</span>';
+                else if(status === 'FAILED') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">FAILED</span>';
+                else statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">PENDING</span>';
+
+                let typeBadge = '';
+                if (type === 'DEPOSIT') typeBadge = '<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">DEPOSIT</span>';
+                else if (type === 'WITHDRAWAL') typeBadge = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">WITHDRAWAL</span>';
+                else typeBadge = '<span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">EXCHANGE</span>';
+
+                let details = '';
+                if (type === 'EXCHANGE') details = `${fromCode} <i class="fa-solid fa-arrow-right mx-1 text-[10px]"></i> ${toCode}`;
+                else if (type === 'DEPOSIT') details = `<i class="fa-solid fa-arrow-down-left mr-1 text-green-500"></i> ${toCode}`;
+                else details = `<i class="fa-solid fa-arrow-up-right ml-1 text-blue-500"></i> ${fromCode}`;
+
                 return `
-                    <tr>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-size: 0.85rem; color: #7f8c8d;">${date}</td>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-weight: 600;">${fromCode}</td>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-weight: 600;">${toCode}</td>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9;">${amount} ${fromCode}</td>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; color: #e17055;">${fee} ${fromCode}</td>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-weight: bold; color: #27ae60;">${status === 'COMPLETED' ? '+' + converted + ' ' + toCode : '-'}</td>
-                        <td style="padding: 12px 10px; border-bottom: 1px solid #f9f9f9;"><span class="status-badge ${statusClass}">${status}</span></td>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${typeBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">${details}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${amount}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">-${fee}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">${type === 'WITHDRAWAL' ? '-' : '+' + converted}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                     </tr>
                 `;
             }).join('');
         }
+    }
+
+    function swapCurrencies() {
+        const fromSel = document.getElementById('from-currency');
+        const toSel = document.getElementById('to-currency');
+        const temp = fromSel.value;
+        fromSel.value = toSel.value;
+        toSel.value = temp;
+        updateWUInfo();
     }
 
     async function handleExchange() {
@@ -293,39 +546,37 @@
 
         if (!amount || amount <= 0) {
             msg.innerText = 'Please enter a valid amount.';
-            msg.style.color = 'red';
+            msg.className = 'text-center text-sm font-medium mt-2 text-red-500';
             return;
         }
 
         if (from === to) {
-            msg.innerText = 'Source and target currencies must be different.';
-            msg.style.color = 'red';
+            msg.innerText = 'Source and target must be different.';
+            msg.className = 'text-center text-sm font-medium mt-2 text-red-500';
             return;
         }
 
-        msg.innerText = 'Processing...';
-        msg.style.color = '#7f8c8d';
+        msg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+        msg.className = 'text-center text-sm font-medium mt-2 text-gray-500';
 
         const res = await fetch('/api/transactions/exchange', {
             method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ fromCurrency: from, toCurrency: to, amount: parseFloat(amount) })
         });
 
         if (res.ok) {
             const result = await res.json();
-            msg.innerHTML = `✅ Exchange successful! You received <strong>${parseFloat(result.convertedAmount).toFixed(2)} ${result.to}</strong> (Fee: ${parseFloat(result.fee).toFixed(2)} ${result.from})`;
-            msg.style.color = 'green';
+            msg.innerHTML = `<i class="fa-solid fa-check-circle"></i> Success! Received <strong>${parseFloat(result.convertedAmount).toFixed(2)} ${result.to}</strong>`;
+            msg.className = 'text-center text-sm font-bold mt-2 text-green-600 bg-green-50 p-2 rounded';
             document.getElementById('ex-amount').value = '';
             fetchData();
         } else {
             const err = await res.json().catch(() => ({ error: 'Exchange failed' }));
-            msg.innerText = '❌ ' + (err.error || 'Exchange failed');
-            msg.style.color = 'red';
+            msg.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${err.error || 'Exchange failed'}`;
+            msg.className = 'text-center text-sm font-bold mt-2 text-red-600 bg-red-50 p-2 rounded';
         }
+        setTimeout(() => msg.innerText='', 5000);
     }
 
     function updateWUInfo() {
@@ -340,8 +591,10 @@
         const toCode = toSel.value;
         const wuCard = document.getElementById('wu-card');
 
+        document.getElementById('amt-currency-label').innerText = fromCode;
+
         if (!window.allRates || !fromCode || !toCode || !amt || amt <= 0) {
-            if (wuCard) wuCard.style.display = 'none';
+            wuCard.classList.add('hidden');
             return;
         }
 
@@ -349,7 +602,7 @@
         const toCurr = window.allRates.find(r => r.currencyCode === toCode);
         
         if (!fromCurr || !toCurr) {
-            if (wuCard) wuCard.style.display = 'none';
+            wuCard.classList.add('hidden');
             return;
         }
 
@@ -361,11 +614,10 @@
         const finalAmt = (amt - fee) * crossRate;
 
         document.getElementById('wu-rate').innerText = `1 ${fromCode} = ${crossRate.toFixed(4)} ${toCode}`;
-        document.getElementById('wu-fee').innerText = `${fee.toFixed(2)} ${fromCode}`;
+        document.getElementById('wu-fee').innerText = `-${fee.toFixed(2)} ${fromCode}`;
         document.getElementById('wu-gets').innerText = `${finalAmt.toFixed(2)} ${toCode}`;
-        wuCard.style.display = 'block';
+        wuCard.classList.remove('hidden');
 
-        // Update table conversion values
         window.allRates.forEach(r => {
             const el = document.getElementById(`conv-${r.currencyCode}`);
             if (el) {
@@ -375,7 +627,6 @@
             }
         });
 
-        // Update balance display
         if (window.allWallets) {
             const wall = window.allWallets.find(w => w.currency && w.currency.currencyCode === fromCode);
             document.getElementById('from-balance').innerText = `Balance: ${wall ? parseFloat(wall.balance).toFixed(2) : '0.00'}`;
@@ -386,47 +637,138 @@
         document.getElementById('to-currency').value = code;
         updateWUInfo();
         document.getElementById('ex-amount').focus();
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // Deposit modal functions
     function openDepositModal() {
-        document.getElementById('deposit-modal').classList.add('active');
+        document.getElementById('deposit-modal').classList.remove('hidden');
         document.getElementById('deposit-msg').innerText = '';
+        updateDepositPlaceholder();
     }
+    
     function closeDepositModal() {
-        document.getElementById('deposit-modal').classList.remove('active');
+        document.getElementById('deposit-modal').classList.add('hidden');
     }
+
+    function updateDepositPlaceholder() {
+        const method = document.getElementById('deposit-method').value;
+        const label = document.getElementById('deposit-account-label');
+        const input = document.getElementById('deposit-account');
+        if (method === 'momo') {
+            label.innerText = 'Phone Number';
+            input.placeholder = 'e.g., 078XXXXXXX';
+        } else if (method === 'bank') {
+            label.innerText = 'Bank Account / IBAN';
+            input.placeholder = 'e.g., RW00112233...';
+        } else {
+            label.innerText = 'Card Number';
+            input.placeholder = 'XXXX XXXX XXXX XXXX';
+        }
+    }
+    
     async function handleDeposit() {
         const currency = document.getElementById('deposit-currency').value;
         const amount = parseFloat(document.getElementById('deposit-amount').value);
+        const account = document.getElementById('deposit-account').value;
         const msg = document.getElementById('deposit-msg');
+        const btn = document.getElementById('confirm-deposit-btn');
 
-        if (!amount || amount <= 0) {
-            msg.innerText = 'Enter a valid amount.';
-            msg.style.color = 'red';
+        if (!amount || amount <= 0 || !account) {
+            msg.innerText = 'Please fill in all details.';
+            msg.className = 'text-sm font-medium text-center text-red-500 mt-2';
             return;
         }
+        
+        btn.disabled = true;
+        msg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Contacting Payment Gateway...';
+        msg.className = 'text-sm font-medium text-center text-gray-500 mt-2';
+
+        // Simulated Processing Delay
+        await new Promise(r => setTimeout(r, 2000));
 
         const res = await fetch('/api/wallets/deposit', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ currencyCode: currency, amount: amount })
         });
 
         if (res.ok) {
-            msg.innerText = '✅ Deposit successful!';
-            msg.style.color = 'green';
+            msg.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Payment Success! Wallet Updated.';
+            msg.className = 'text-sm font-bold text-center text-green-600 mt-2';
             document.getElementById('deposit-amount').value = '';
+            document.getElementById('deposit-account').value = '';
             fetchData();
-            setTimeout(closeDepositModal, 1000);
+            setTimeout(closeDepositModal, 2000);
         } else {
             const err = await res.json().catch(() => ({ error: 'Deposit failed' }));
-            msg.innerText = '❌ ' + (err.error || 'Deposit failed');
-            msg.style.color = 'red';
+            msg.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${err.error || 'Payment Rejected'}`;
+            msg.className = 'text-sm font-medium text-center text-red-500 mt-2';
         }
+        btn.disabled = false;
+    }
+
+    function openWithdrawModal() {
+        document.getElementById('withdraw-modal').classList.remove('hidden');
+        document.getElementById('withdraw-msg').innerText = '';
+        updateWithdrawPlaceholder();
+    }
+    
+    function closeWithdrawModal() {
+        document.getElementById('withdraw-modal').classList.add('hidden');
+    }
+
+    function updateWithdrawPlaceholder() {
+        const method = document.getElementById('withdraw-method').value;
+        const label = document.getElementById('withdraw-account-label');
+        const input = document.getElementById('withdraw-account');
+        if (method === 'momo') {
+            label.innerText = 'Phone Number';
+            input.placeholder = 'e.g., 078XXXXXXX';
+        } else {
+            label.innerText = 'Bank Account / IBAN';
+            input.placeholder = 'e.g., RW00112233...';
+        }
+    }
+
+    async function handleWithdraw() {
+        const currency = document.getElementById('withdraw-currency').value;
+        const amount = parseFloat(document.getElementById('withdraw-amount').value);
+        const account = document.getElementById('withdraw-account').value;
+        const msg = document.getElementById('withdraw-msg');
+        const btn = document.getElementById('confirm-withdraw-btn');
+
+        if (!amount || amount <= 0 || !account) {
+            msg.innerText = 'Please fill in all details.';
+            msg.className = 'text-sm font-medium text-center text-red-500 mt-2';
+            return;
+        }
+
+        btn.disabled = true;
+        msg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing withdrawal...';
+        msg.className = 'text-sm font-medium text-center text-gray-500 mt-2';
+
+        // Simulated Processing Delay
+        await new Promise(r => setTimeout(r, 2000));
+
+        const res = await fetch('/api/wallets/withdraw', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currencyCode: currency, amount: amount })
+        });
+
+        if (res.ok) {
+            msg.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Withdrawal initiated successfully!';
+            msg.className = 'text-sm font-bold text-center text-green-600 mt-2';
+            document.getElementById('withdraw-amount').value = '';
+            document.getElementById('withdraw-account').value = '';
+            fetchData();
+            setTimeout(closeWithdrawModal, 2000);
+        } else {
+            const err = await res.json().catch(() => ({ error: 'Withdrawal failed' }));
+            msg.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${err.error || 'Withdrawal failed'}`;
+            msg.className = 'text-sm font-medium text-center text-red-500 mt-2';
+        }
+        btn.disabled = false;
     }
 
     function logout() {

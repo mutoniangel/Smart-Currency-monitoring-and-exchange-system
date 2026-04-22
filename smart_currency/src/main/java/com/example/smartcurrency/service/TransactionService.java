@@ -6,6 +6,7 @@ import com.example.smartcurrency.model.Transaction;
 import com.example.smartcurrency.model.User;
 import com.example.smartcurrency.model.Wallet;
 import com.example.smartcurrency.model.TransactionStatus;
+import com.example.smartcurrency.model.TransactionType;
 import com.example.smartcurrency.repository.CurrencyRepository;
 import com.example.smartcurrency.repository.TransactionRepository;
 import com.example.smartcurrency.repository.UserRepository;
@@ -67,6 +68,7 @@ public class TransactionService {
             failedTx.setConvertedAmount(BigDecimal.ZERO);
             failedTx.setTransactionDate(LocalDateTime.now());
             failedTx.setStatus(TransactionStatus.FAILED);
+            failedTx.setTransactionType(TransactionType.EXCHANGE);
             transactionRepository.save(failedTx);
 
             throw new RuntimeException("Daily transaction volume limit exceeded (Max 10,000 USD equivalent per day). Today's total: " + todayTotal.setScale(2, RoundingMode.HALF_UP) + " USD");
@@ -110,6 +112,7 @@ public class TransactionService {
         transaction.setBaseAmount(baseEquivalent);
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setTransactionType(TransactionType.EXCHANGE);
 
         return transactionRepository.save(transaction);
     }

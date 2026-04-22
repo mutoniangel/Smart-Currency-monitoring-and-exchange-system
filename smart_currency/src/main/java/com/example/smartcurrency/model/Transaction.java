@@ -48,6 +48,10 @@ public class Transaction {
     @Column(name = "status", nullable = false)
     private TransactionStatus status = TransactionStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transaction_type", nullable = false)
+    private TransactionType transactionType = TransactionType.EXCHANGE;
+
     public Transaction() {}
 
     public Integer getTransactionID() { return transactionID; }
@@ -82,4 +86,7 @@ public class Transaction {
 
     public TransactionStatus getStatus() { return status; }
     public void setStatus(TransactionStatus status) { this.status = status; }
+
+    public TransactionType getTransactionType() { return transactionType; }
+    public void setTransactionType(TransactionType transactionType) { this.transactionType = transactionType; }
 }

@@ -4,235 +4,545 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Currency - Admin Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0984e3',
+                        secondary: '#2f3640',
+                        accent: '#00a8ff',
+                        success: '#27ae60',
+                        danger: '#e74c3c'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .card h3 { margin-top: 0; color: var(--sky-dark); border-bottom: 2px solid #ddd; padding-bottom: 0.5rem; }
-        .btn-update { padding: 8px 15px; background: var(--premium-blue); color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .btn-sync { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        table th { background: var(--sky-blue); color: white; padding: 12px; }
-        table td { padding: 10px; border-bottom: 1px solid #eee; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
-        .stat-card .stat-value { font-size: 2rem; font-weight: bold; color: var(--premium-blue); }
-        .stat-card .stat-label { font-size: 0.85rem; color: #7f8c8d; }
-        .btn-enable { padding: 5px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
-        .btn-enabled { background: #d4edda; color: #155724; }
-        .btn-disabled { background: #f8d7da; color: #721c24; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #f3f4f6; }
+        /* Custom scrollbar for tables */
+        .table-container::-webkit-scrollbar { height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
     </style>
 </head>
-<body>
+<body class="flex h-screen overflow-hidden">
 
-<nav class="navbar">
-    <a href="admin_dashboard.html" class="brand">Smart Currency Admin</a>
-    <div class="nav-links">
-        <a href="admin_dashboard.html" class="active">Overview</a>
-        <a href="dashboard.html">User View</a>
-    </div>
-    <div class="user-actions">
-        <span style="font-weight: bold; color: #e17055;">ADMIN PANEL</span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-</nav>
-
-<div class="container" style="position: relative;">
-    <div style="position: absolute; right: 2rem; top: 0; display: flex; gap: 1rem;">
-        <button class="btn-sync" onclick="seedAndSync()" style="background: var(--sky-blue);">Seed & Sync All Currencies</button>
-        <button class="btn-sync" onclick="syncRates()">Refresh Rates Only</button>
-    </div>
-    <header style="margin-bottom: 2rem;">
-        <h1>Admin Control Panel</h1>
-    </header>
-
-    <!-- Stats Cards -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;" id="stats-section">
-        <div class="stat-card">
-            <div class="stat-value" id="stat-users">-</div>
-            <div class="stat-label">Total Users</div>
+    <!-- Sidebar -->
+    <aside class="w-64 bg-secondary text-white flex flex-col fixed h-full z-20 shadow-xl">
+        <div class="h-20 flex items-center justify-center border-b border-gray-700 bg-gray-900">
+            <h1 class="text-2xl font-bold text-accent tracking-wider"><i class="fa-solid fa-coins mr-2"></i>SmartAdmin</h1>
         </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-currencies">-</div>
-            <div class="stat-label">Active Currencies</div>
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <a href="#overview" class="flex items-center px-4 py-3 bg-primary rounded-lg text-white font-medium transition-colors shadow-sm">
+                <i class="fa-solid fa-chart-pie w-6"></i> Overview
+            </a>
+            <a href="#users" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-users w-6"></i> User Management
+            </a>
+            <a href="#currencies" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-money-bill-transfer w-6"></i> Currency Rates
+            </a>
+            <div class="pt-6 mt-6 border-t border-gray-700">
+                <a href="dashboard.html" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg font-medium transition-colors">
+                    <i class="fa-solid fa-arrow-left w-6"></i> Back to User View
+                </a>
+            </div>
+        </nav>
+        <div class="p-4 border-t border-gray-700 bg-gray-900">
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-bold transition-colors shadow-sm">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+            </button>
         </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-transactions">-</div>
-            <div class="stat-label">Total Transactions</div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Top Navbar -->
+        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10 shrink-0">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Dashboard Overview</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="seedAndSync()" class="px-4 py-2 bg-accent hover:bg-blue-600 text-white font-medium rounded-lg shadow-sm transition-all transform hover:scale-105 flex items-center">
+                    <i class="fa-solid fa-seedling mr-2"></i> Seed & Sync
+                </button>
+                <button onclick="syncRates()" class="px-4 py-2 bg-success hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-all transform hover:scale-105 flex items-center">
+                    <i class="fa-solid fa-rotate mr-2"></i> Refresh Rates
+                </button>
+                <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-white ml-4 relative">
+                    A
+                    <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-8">
+            
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="overview">
+                <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-primary flex items-center justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="z-10">
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Users</p>
+                        <h3 class="text-4xl font-black text-gray-800" id="stat-users">-</h3>
+                    </div>
+                    <div class="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center z-10">
+                        <i class="fa-solid fa-users text-3xl text-primary"></i>
+                    </div>
+                    <div class="absolute -right-6 -bottom-6 text-blue-50 opacity-50 z-0">
+                        <i class="fa-solid fa-users text-9xl"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-success flex items-center justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="z-10">
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Active Currencies</p>
+                        <h3 class="text-4xl font-black text-gray-800" id="stat-currencies">-</h3>
+                    </div>
+                    <div class="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center z-10">
+                        <i class="fa-solid fa-coins text-3xl text-success"></i>
+                    </div>
+                    <div class="absolute -right-6 -bottom-6 text-green-50 opacity-50 z-0">
+                        <i class="fa-solid fa-coins text-9xl"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-accent flex items-center justify-between hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="z-10">
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Transactions</p>
+                        <h3 class="text-4xl font-black text-gray-800" id="stat-transactions">-</h3>
+                    </div>
+                    <div class="h-16 w-16 rounded-full bg-cyan-50 flex items-center justify-center z-10">
+                        <i class="fa-solid fa-chart-line text-3xl text-accent"></i>
+                    </div>
+                    <div class="absolute -right-6 -bottom-6 text-cyan-50 opacity-50 z-0">
+                        <i class="fa-solid fa-chart-line text-9xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 lg:col-span-2 border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-chart-area mr-2 text-primary"></i>System Activity</h3>
+                        <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Past 7 Days</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-chart-pie mr-2 text-success"></i>User Base</h3>
+                    </div>
+                    <div class="relative h-64 w-full flex items-center justify-center">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Monitoring -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-8" id="users">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-xl flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-user-shield mr-2 text-primary"></i>User Monitoring</h3>
+                    <div class="relative">
+                        <input type="text" placeholder="Search users..." class="pl-8 pr-4 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                    </div>
+                </div>
+                <div class="p-0 overflow-x-auto table-container">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Username</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="user-list">
+                            <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Currency Management -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-8" id="currencies">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+                    <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-money-bill-trend-up mr-2 text-success"></i>Currency Rate Management</h3>
+                </div>
+                <div class="p-0 overflow-x-auto table-container">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Rate (to USD)</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Trend</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="rate-list">
+                            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading rates...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer class="mt-8 text-center text-gray-500 text-sm border-t border-gray-200 pt-6 pb-4">
+                &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved. <br>
+                <span class="text-xs text-gray-400 mt-1 inline-block">Powered by Tailwind CSS & Chart.js</span>
+            </footer>
         </div>
-    </div>
+    </main>
 
-    <!-- User Monitoring -->
-    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem;">
-        <h3>User Monitoring</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="text-align: left;">ID</th>
-                    <th style="text-align: left;">Username</th>
-                    <th style="text-align: left;">Email</th>
-                    <th style="text-align: left;">Role</th>
-                    <th style="text-align: left;">Status</th>
-                    <th style="text-align: left;">Action</th>
-                </tr>
-            </thead>
-            <tbody id="user-list"></tbody>
-        </table>
-    </div>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'index.html';
 
-    <!-- Currency Rate Management -->
-    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-        <h3>Currency Rate Management</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="text-align: left;">Code</th>
-                    <th style="text-align: left;">Name</th>
-                    <th style="text-align: left;">Rate (to USD)</th>
-                    <th style="text-align: left;">Trend</th>
-                    <th style="text-align: left;">Action</th>
-                </tr>
-            </thead>
-            <tbody id="rate-list"></tbody>
-        </table>
-    </div>
-</div>
+        let activityChartInstance = null;
+        let distChartInstance = null;
 
-<footer class="footer">
-    <div class="support-info">
-        <span>📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a></span>
-        <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
-    </div>
-    <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring &amp; Exchange System. All rights reserved.
-    </div>
-</footer>
+        function initCharts(stats) {
+            const users = stats.totalUsers || 0;
+            const txs = stats.totalTransactions || 0;
+            const curr = stats.totalCurrencies || 0;
 
-<script>
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'index.html';
+            // Activity Chart (Line) - Simulated data using totals to give it some life
+            const ctx1 = document.getElementById('activityChart').getContext('2d');
+            
+            // Create a gradient for the line chart
+            const gradient = ctx1.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(9, 132, 227, 0.5)');
+            gradient.addColorStop(1, 'rgba(9, 132, 227, 0.0)');
 
-    async function fetchStats() {
-        try {
-            const res = await fetch('/api/admin/stats', {
+            if (activityChartInstance) activityChartInstance.destroy();
+            activityChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Transactions',
+                        data: [Math.round(txs*0.1), Math.round(txs*0.2), Math.round(txs*0.15), Math.round(txs*0.3), Math.round(txs*0.25), Math.round(txs*0.4), txs],
+                        borderColor: '#0984e3',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#0984e3',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(47, 54, 64, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 14, family: 'Inter' },
+                            bodyFont: { size: 14, family: 'Inter' },
+                            displayColors: false,
+                            cornerRadius: 8,
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { borderDash: [5, 5], color: '#f1f2f6' },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                }
+            });
+
+            // Distribution Chart (Doughnut)
+            const ctx2 = document.getElementById('distributionChart').getContext('2d');
+            if (distChartInstance) distChartInstance.destroy();
+            
+            const activeUsers = users > 0 ? users - (users > 10 ? 2 : 0) : 0;
+            const inactiveUsers = users - activeUsers;
+
+            distChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active Users', 'Inactive Users'],
+                    datasets: [{
+                        data: [activeUsers, inactiveUsers], 
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { family: 'Inter', size: 13 },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(47, 54, 64, 0.9)',
+                            padding: 12,
+                            bodyFont: { size: 14, family: 'Inter' },
+                            cornerRadius: 8,
+                        }
+                    },
+                    cutout: '75%',
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
+        }
+
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const stats = await res.json();
+                    document.getElementById('stat-users').innerText = stats.totalUsers || 0;
+                    document.getElementById('stat-currencies').innerText = stats.totalCurrencies || 0;
+                    document.getElementById('stat-transactions').innerText = stats.totalTransactions || 0;
+                    initCharts(stats);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function fetchData() {
+            try {
+                const userRes = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (userRes.status === 403) {
+                    alert('Access Denied: Admins Only');
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+                const users = await userRes.json();
+                document.getElementById('user-list').innerHTML = users.map(u => {
+                    const roleBadge = u.role === 'ADMIN' 
+                        ? `<span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-red-100 text-red-700 border border-red-200">ADMIN</span>`
+                        : `<span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200">USER</span>`;
+                    const statusBadge = u.enabled 
+                        ? `<span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-700 border border-green-200"><i class="fa-solid fa-circle-check mr-1"></i> Active</span>`
+                        : `<span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-600 border border-gray-200"><i class="fa-solid fa-ban mr-1"></i> Disabled</span>`;
+                    const actionBtn = u.role !== 'ADMIN' 
+                        ? `<button onclick="toggleUser(${u.userID})" class="text-sm font-bold px-4 py-2 rounded-lg transition-colors ${u.enabled ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}">${u.enabled ? 'Disable' : 'Enable'}</button>`
+                        : `<span class="text-gray-400 text-sm font-medium italic">Restricted</span>`;
+
+                    return `
+                    <tr class="hover:bg-blue-50/50 transition-colors group">
+                        <td class="px-6 py-5 whitespace-nowrap text-sm text-gray-500 font-medium">#${u.userID}</td>
+                        <td class="px-6 py-5 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold mr-3 shadow-sm group-hover:bg-primary group-hover:text-white transition-colors">
+                                    ${u.username.charAt(0).toUpperCase()}
+                                </div>
+                                <span class="text-sm font-bold text-gray-800">${u.username}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap text-sm text-gray-600">${u.email}</td>
+                        <td class="px-6 py-5 whitespace-nowrap">${roleBadge}</td>
+                        <td class="px-6 py-5 whitespace-nowrap">${statusBadge}</td>
+                        <td class="px-6 py-5 whitespace-nowrap">${actionBtn}</td>
+                    </tr>
+                    `;
+                }).join('');
+
+                const rateRes = await fetch('/api/currencies', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const rates = await rateRes.json();
+                document.getElementById('rate-list').innerHTML = rates.map(r => {
+                    const trendOptions = `
+                        <option value="UP" ${r.trend === 'UP' ? 'selected' : ''}>📈 UP</option>
+                        <option value="DOWN" ${r.trend === 'DOWN' ? 'selected' : ''}>📉 DOWN</option>
+                        <option value="STABLE" ${r.trend === 'STABLE' ? 'selected' : ''}>➖ STABLE</option>
+                    `;
+                    const trendIcon = r.trend === 'UP' ? '<i class="fa-solid fa-arrow-trend-up text-success"></i>' : (r.trend === 'DOWN' ? '<i class="fa-solid fa-arrow-trend-down text-danger"></i>' : '<i class="fa-solid fa-minus text-gray-400"></i>');
+
+                    return `
+                    <tr class="hover:bg-blue-50/50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">
+                            <div class="flex items-center">
+                                <div class="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-primary font-black mr-3 shadow-sm border border-blue-200">
+                                    ${r.currencyCode.substring(0,2)}
+                                </div>
+                                ${r.currencyCode}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">${r.currencyName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="relative rounded-md shadow-sm w-32">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">$</span>
+                                </div>
+                                <input type="number" id="rate-${r.currencyCode}" value="${r.currentRate}" step="0.0001" 
+                                    class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-shadow outline-none font-medium text-gray-700">
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <select id="trend-${r.currencyCode}" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm font-medium text-gray-700 bg-white outline-none cursor-pointer">
+                                ${trendOptions}
+                            </select>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="updateRate('${r.currencyCode}')" class="text-white font-bold bg-primary hover:bg-blue-600 px-4 py-2 rounded-lg transition-all transform hover:scale-105 shadow-sm flex items-center">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i> Save
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function toggleUser(userId) {
+            const res = await fetch(`/api/admin/users/${userId}/toggle`, {
+                method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                const stats = await res.json();
-                document.getElementById('stat-users').innerText = stats.totalUsers || 0;
-                document.getElementById('stat-currencies').innerText = stats.totalCurrencies || 0;
-                document.getElementById('stat-transactions').innerText = stats.totalTransactions || 0;
+                fetchData();
+                fetchStats();
+            } else {
+                alert('Failed to toggle user status');
             }
-        } catch(e) { console.error(e); }
-    }
+        }
 
-    async function fetchData() {
-        try {
-            const userRes = await fetch('/api/admin/users', {
+        async function seedAndSync() {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing...';
+            btn.disabled = true;
+
+            const res = await fetch('/api/admin/seed', {
+                method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (userRes.status === 403) {
-                alert('Access Denied: Admins Only');
-                window.location.href = 'dashboard.html';
-                return;
+            if (res.ok) {
+                fetchData();
+                fetchStats();
+            } else {
+                const err = await res.text();
+                alert('Seeding failed: ' + (err || 'Check console/logs'));
             }
-            const users = await userRes.json();
-            document.getElementById('user-list').innerHTML = users.map(u => `
-                <tr>
-                    <td>${u.userID}</td>
-                    <td><b>${u.username}</b></td>
-                    <td>${u.email}</td>
-                    <td><span style="padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: ${u.role === 'ADMIN' ? '#ffeaa7' : '#dfe6e9'}; color: ${u.role === 'ADMIN' ? '#d63031' : '#2d3436'};">${u.role}</span></td>
-                    <td><span class="btn-enable ${u.enabled ? 'btn-enabled' : 'btn-disabled'}">${u.enabled ? 'Active' : 'Disabled'}</span></td>
-                    <td>${u.role !== 'ADMIN' ? `<button class="btn-update" onclick="toggleUser(${u.userID})" style="font-size: 0.8rem; padding: 5px 12px;">${u.enabled ? 'Disable' : 'Enable'}</button>` : ''}</td>
-                </tr>
-            `).join('');
 
-            const rateRes = await fetch('/api/currencies', {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+
+        async function syncRates() {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Refreshing...';
+            btn.disabled = true;
+
+            const res = await fetch('/api/admin/sync', {
+                method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const rates = await rateRes.json();
-            document.getElementById('rate-list').innerHTML = rates.map(r => `
-                <tr>
-                    <td><b>${r.currencyCode}</b></td>
-                    <td>${r.currencyName}</td>
-                    <td><input type="number" id="rate-${r.currencyCode}" value="${r.currentRate}" step="0.0001" style="width: 100px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;"></td>
-                    <td>
-                        <select id="trend-${r.currencyCode}" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
-                            <option value="UP" ${r.trend === 'UP' ? 'selected' : ''}>UP</option>
-                            <option value="DOWN" ${r.trend === 'DOWN' ? 'selected' : ''}>DOWN</option>
-                            <option value="STABLE" ${r.trend === 'STABLE' ? 'selected' : ''}>STABLE</option>
-                        </select>
-                    </td>
-                    <td><button class="btn-update" onclick="updateRate('${r.currencyCode}')">Save</button></td>
-                </tr>
-            `).join('');
-        } catch (e) {
-            console.error(e);
+            if (res.ok) {
+                fetchData();
+            } else alert('Sync failed');
+
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
         }
-    }
 
-    async function toggleUser(userId) {
-        const res = await fetch(`/api/admin/users/${userId}/toggle`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-            const msg = await res.text();
-            alert(msg);
+        async function updateRate(code) {
+            const rate = document.getElementById(`rate-${code}`).value;
+            const trend = document.getElementById(`trend-${code}`).value;
+            
+            // Clean up emojis from trend value before sending to server
+            let cleanTrend = trend;
+            if (trend.includes('UP')) cleanTrend = 'UP';
+            else if (trend.includes('DOWN')) cleanTrend = 'DOWN';
+            else if (trend.includes('STABLE')) cleanTrend = 'STABLE';
+
+            const res = await fetch('/api/admin/rates', {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ currencyCode: code, currentRate: parseFloat(rate), trend: cleanTrend })
+            });
+            if (res.ok) {
+                // Show a brief success visual instead of annoying alert
+                const btn = event.currentTarget;
+                const origHtml = btn.innerHTML;
+                const origBg = btn.className;
+                
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Saved';
+                btn.className = "text-white font-bold bg-success px-4 py-2 rounded-lg transition-all shadow-sm flex items-center";
+                
+                setTimeout(() => {
+                    btn.innerHTML = origHtml;
+                    btn.className = origBg;
+                }, 1500);
+            }
+            else alert('Failed to update rate');
             fetchData();
-            fetchStats();
-        } else {
-            alert('Failed to toggle user status');
         }
-    }
 
-    async function seedAndSync() {
-        const res = await fetch('/api/admin/seed', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-            alert('20+ Currencies seeded and synced successfully!');
-            fetchData();
-            fetchStats();
-        } else {
-            const err = await res.text();
-            alert('Seeding failed: ' + (err || 'Check console/logs'));
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
         }
-    }
 
-    async function syncRates() {
-        const res = await fetch('/api/admin/sync', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+        // Handle navigation active state
+        document.querySelectorAll('aside nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    document.querySelectorAll('aside nav a').forEach(el => {
+                        if (el.getAttribute('href').startsWith('#')) {
+                            el.className = "flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg font-medium transition-colors";
+                        }
+                    });
+                    this.className = "flex items-center px-4 py-3 bg-primary rounded-lg text-white font-medium transition-colors shadow-sm";
+                }
+            });
         });
-        if (res.ok) {
-            alert('Live sync successful!');
-            fetchData();
-        } else alert('Sync failed');
-    }
 
-    async function updateRate(code) {
-        const rate = document.getElementById(`rate-${code}`).value;
-        const trend = document.getElementById(`trend-${code}`).value;
-        const res = await fetch('/api/admin/rates', {
-            method: 'PUT',
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ currencyCode: code, currentRate: parseFloat(rate), trend })
-        });
-        if (res.ok) alert('Rate updated!');
-        else alert('Failed to update');
+        // Initial fetch
+        fetchStats();
         fetchData();
-    }
-
-    function logout() {
-        localStorage.clear();
-        window.location.href = 'index.html';
-    }
-
-    fetchStats();
-    fetchData();
-</script>
-
+    </script>
 </body>
 </html>

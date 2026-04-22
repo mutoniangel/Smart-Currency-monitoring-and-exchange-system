@@ -4,91 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Currency - Transactions</title>
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2e7d32',
+                        primaryLight: '#4caf50',
+                        secondary: '#1b5e20',
+                        accent: '#27ae60',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .status-completed { background: #d4edda; color: #155724; }
-        .status-failed { background: #f8d7da; color: #721c24; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .filter-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: flex-end; }
-        .filter-bar label { font-size: 0.85rem; color: #7f8c8d; display: block; margin-bottom: 0.3rem; }
-        .filter-bar input, .filter-bar select { padding: 0.6rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
-        .filter-bar button { padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .table-container::-webkit-scrollbar { height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
     </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
 
-<nav class="navbar">
-    <a href="dashboard.html" class="brand">Smart Currency</a>
-    <div class="nav-links">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="transactions.html" class="active">Transactions</a>
-        <a href="settings.html">Settings</a>
-        <a href="admin_dashboard.html" id="admin-link" style="display: none; color: #e17055;">Admin</a>
-    </div>
-    <div class="user-actions">
-        <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+<!-- Navbar -->
+<nav class="bg-secondary text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="dashboard.html" class="flex-shrink-0 flex items-center text-xl font-bold text-white tracking-wide">
+                    <i class="fa-solid fa-money-bill-trend-up text-primaryLight mr-2"></i> Smart Currency
+                </a>
+                <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
+                    <a href="dashboard.html" class="border-transparent text-gray-300 hover:text-white hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Dashboard</a>
+                    <a href="transactions.html" class="border-primaryLight text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Transactions</a>
+                    <a href="settings.html" class="border-transparent text-gray-300 hover:text-white hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Settings</a>
+                    <a href="admin_dashboard.html" id="admin-link" style="display: none;" class="border-transparent text-orange-400 hover:text-orange-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Admin Panel</a>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center space-x-4">
+                    <span id="nav-username" class="font-semibold text-sm">User</span>
+                    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="container">
-    <header style="margin-bottom: 2rem;">
-        <h2>Your Transaction History</h2>
+<!-- Main Content -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <header class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Your Transaction History</h1>
+        <p class="text-gray-500 mt-1">Review your past currency exchanges, deposits, and withdrawals.</p>
     </header>
 
-    <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        
         <!-- Filter Bar -->
-        <div class="filter-bar">
+        <div class="flex flex-wrap items-end gap-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
             <div>
-                <label>Start Date</label>
-                <input type="datetime-local" id="filter-start">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input type="datetime-local" id="filter-start" class="block w-full pl-3 pr-3 py-2 border-gray-300 focus:ring-primary focus:border-primary sm:text-sm rounded-md border outline-none">
             </div>
             <div>
-                <label>End Date</label>
-                <input type="datetime-local" id="filter-end">
+                <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input type="datetime-local" id="filter-end" class="block w-full pl-3 pr-3 py-2 border-gray-300 focus:ring-primary focus:border-primary sm:text-sm rounded-md border outline-none">
             </div>
             <div>
-                <label>Target Currency</label>
-                <select id="filter-currency">
-                    <option value="">All</option>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Target Currency</label>
+                <select id="filter-currency" class="block w-full pl-3 pr-10 py-2 border-gray-300 focus:ring-primary focus:border-primary sm:text-sm rounded-md border outline-none bg-white">
+                    <option value="">All Currencies</option>
                 </select>
             </div>
-            <div>
-                <button onclick="applyFilter()" style="background: var(--premium-blue);">Filter</button>
-                <button onclick="clearFilter()" style="background: #95a5a6;">Clear</button>
+            <div class="flex gap-2">
+                <button onclick="applyFilter()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm"><i class="fa-solid fa-filter mr-1"></i> Filter</button>
+                <button onclick="clearFilter()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm"><i class="fa-solid fa-xmark mr-1"></i> Clear</button>
             </div>
         </div>
 
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; background: var(--sky-white);">
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Date</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">From</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">To</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Amount Sold</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Fee (1%)</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Rate</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Received</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">Status</th>
-                    <th style="padding: 12px; border-bottom: 1px solid #eee;">ID</th>
-                </tr>
-            </thead>
-            <tbody id="txn-list">
-                <tr><td colspan="9">Loading history...</td></tr>
-            </tbody>
-        </table>
+        <div class="overflow-x-auto table-container">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fee</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Received</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
+                    </tr>
+                </thead>
+                <tbody id="txn-list" class="bg-white divide-y divide-gray-200">
+                    <tr><td colspan="8" class="px-6 py-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</main>
 
-<footer class="footer">
-    <div class="support-info">
-        <span>📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a></span>
-        <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
-    </div>
-    <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring &amp; Exchange System. All rights reserved.
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+        <div class="text-sm text-gray-500 mb-4 md:mb-0">
+            &copy; 2024 Smart Currency System. All rights reserved.
+        </div>
+        <div class="flex space-x-6 text-sm">
+            <a href="mailto:mutoniangel2005@gmail.com" class="text-gray-400 hover:text-gray-900 transition-colors"><i class="fa-solid fa-envelope mr-1"></i> Support</a>
+            <a href="tel:0798052603" class="text-gray-400 hover:text-gray-900 transition-colors"><i class="fa-solid fa-phone mr-1"></i> Contact</a>
+        </div>
     </div>
 </footer>
 
@@ -101,13 +134,12 @@
     document.getElementById('nav-username').innerText = username;
 
     if (userRole && userRole.toUpperCase() === 'ADMIN') {
-        document.getElementById('admin-link').style.display = 'inline';
+        document.getElementById('admin-link').style.display = 'inline-flex';
     }
 
-    // Load currency options for filter
     async function loadCurrencies() {
         try {
-            const res = await fetch('/api/currencies');
+            const res = await fetch('/api/currencies', { headers: { 'Authorization': `Bearer ${token}` } });
             const currencies = await res.json();
             const sel = document.getElementById('filter-currency');
             currencies.forEach(c => {
@@ -121,37 +153,56 @@
 
     async function fetchHistory(url) {
         try {
+            const list = document.getElementById('txn-list');
+            list.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>';
+
             const res = await fetch(url || '/api/transactions/my', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const transactions = await res.json();
-            const list = document.getElementById('txn-list');
             
             if (!transactions || transactions.length === 0) {
-                list.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No transactions found.</td></tr>';
+                list.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">No transactions found.</td></tr>';
                 return;
             }
 
             list.innerHTML = transactions.map(t => {
-                const fromCode = (t.fromCurrency && t.fromCurrency.currencyCode) ? t.fromCurrency.currencyCode : '???';
-                const toCode = (t.toCurrency && t.toCurrency.currencyCode) ? t.toCurrency.currencyCode : '???';
-                const fee = t.fee !== undefined && t.fee !== null ? parseFloat(t.fee).toFixed(2) : '-';
-                const converted = t.convertedAmount !== undefined && t.convertedAmount !== null ? parseFloat(t.convertedAmount).toFixed(2) : '-';
+                const date = new Date(t.transactionDate).toLocaleString();
+                const type = t.transactionType || 'EXCHANGE';
+                const fromCode = t.fromCurrency ? t.fromCurrency.currencyCode : '-';
+                const toCode = t.toCurrency ? t.toCurrency.currencyCode : '-';
+                const amount = t.amount ? parseFloat(t.amount).toFixed(2) : '0.00';
+                const fee = t.fee ? parseFloat(t.fee).toFixed(2) : '0.00';
+                const converted = t.convertedAmount ? parseFloat(t.convertedAmount).toFixed(2) : '0.00';
+                
                 const status = t.status || 'PENDING';
-                const statusClass = status === 'COMPLETED' ? 'status-completed' : (status === 'FAILED' ? 'status-failed' : 'status-pending');
+                let statusBadge = '';
+                if(status === 'COMPLETED') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">COMPLETED</span>';
+                else if(status === 'FAILED') statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">FAILED</span>';
+                else statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">PENDING</span>';
+
+                let typeBadge = '';
+                if (type === 'DEPOSIT') typeBadge = '<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">DEPOSIT</span>';
+                else if (type === 'WITHDRAWAL') typeBadge = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">WITHDRAWAL</span>';
+                else typeBadge = '<span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">EXCHANGE</span>';
+
+                let details = '';
+                if (type === 'EXCHANGE') details = `${fromCode} <i class="fa-solid fa-arrow-right mx-1 text-[10px]"></i> ${toCode}`;
+                else if (type === 'DEPOSIT') details = `<i class="fa-solid fa-arrow-down-left mr-1 text-green-500"></i> ${toCode}`;
+                else details = `<i class="fa-solid fa-arrow-up-right ml-1 text-blue-500"></i> ${fromCode}`;
+
                 return `
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${new Date(t.transactionDate).toLocaleString()}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><b>${fromCode}</b></td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><b>${toCode}</b></td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${parseFloat(t.amount).toFixed(2)} ${fromCode}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: #e17055;">${fee} ${fromCode}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: var(--premium-blue);">${parseFloat(t.exchangeRate).toFixed(4)}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #27ae60;">${status === 'COMPLETED' ? '+' + converted + ' ' + toCode : '-'}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;"><span class="status-badge ${statusClass}">${status}</span></td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; color: #95a5a6; font-size: 0.8rem;">#${t.transactionID}</td>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${typeBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">${details}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${amount}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">-${fee}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">${type === 'WITHDRAWAL' ? '-' : '+' + converted}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-400">#${t.transactionID}</td>
                 </tr>
-            `;
+                `;
             }).join('');
         } catch (err) {
             console.error('Failed to fetch transactions', err);

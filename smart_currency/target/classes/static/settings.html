@@ -4,54 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Currency - Settings</title>
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2e7d32',
+                        primaryLight: '#4caf50',
+                        secondary: '#1b5e20',
+                        accent: '#27ae60',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
 
-<nav class="navbar">
-    <a href="dashboard.html" class="brand">Smart Currency</a>
-    <div class="nav-links">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="transactions.html">Transactions</a>
-        <a href="settings.html" class="active">Settings</a>
-        <a href="admin_dashboard.html" id="admin-link" style="display: none; color: #e17055;">Admin</a>
-    </div>
-    <div class="user-actions">
-        <span id="nav-username" style="font-weight: bold; color: var(--sky-blue);">User</span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+<!-- Navbar -->
+<nav class="bg-secondary text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="dashboard.html" class="flex-shrink-0 flex items-center text-xl font-bold text-white tracking-wide">
+                    <i class="fa-solid fa-money-bill-trend-up text-primaryLight mr-2"></i> Smart Currency
+                </a>
+                <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
+                    <a href="dashboard.html" class="border-transparent text-gray-300 hover:text-white hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Dashboard</a>
+                    <a href="transactions.html" class="border-transparent text-gray-300 hover:text-white hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Transactions</a>
+                    <a href="settings.html" class="border-primaryLight text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Settings</a>
+                    <a href="admin_dashboard.html" id="admin-link" style="display: none;" class="border-transparent text-orange-400 hover:text-orange-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">Admin Panel</a>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center space-x-4">
+                    <span id="nav-username" class="font-semibold text-sm">User</span>
+                    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="container">
-    <header style="margin-bottom: 2rem;">
-        <h2>User Settings</h2>
-    </header>
-
-    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); max-width: 500px; margin: 0 auto;">
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Username</label>
-            <input type="text" id="username" disabled style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background: #eee;">
+<!-- Main Content -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    
+    <div class="max-w-xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="px-6 py-8 border-b border-gray-100 bg-gray-50 flex flex-col items-center justify-center">
+                <div class="h-20 w-20 bg-primaryLight rounded-full flex items-center justify-center text-3xl text-white font-bold mb-3 shadow-md">
+                    <i class="fa-solid fa-user-gear"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Account Settings</h2>
+                <p class="text-gray-500 text-sm">Update your profile and security credentials</p>
+            </div>
+            
+            <div class="p-6 sm:p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" id="username" disabled class="block w-full pl-10 pr-3 py-3 border-gray-300 bg-gray-100 text-gray-500 sm:text-sm rounded-lg border outline-none cursor-not-allowed font-medium">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Username cannot be changed.</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-envelope text-gray-400"></i>
+                        </div>
+                        <input type="email" id="email" placeholder="Enter your email" class="focus:ring-primary focus:border-primary block w-full pl-10 pr-3 py-3 sm:text-sm border-gray-300 rounded-lg border outline-none text-gray-900">
+                    </div>
+                </div>
+                
+                <div class="pt-4 border-t border-gray-100">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Change Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="password" placeholder="Leave blank to keep current password" class="focus:ring-primary focus:border-primary block w-full pl-10 pr-3 py-3 sm:text-sm border-gray-300 rounded-lg border outline-none text-gray-900">
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button onclick="updateProfile()" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes
+                    </button>
+                    <div id="msg" class="mt-4 text-center text-sm font-medium min-h-[20px]"></div>
+                </div>
+            </div>
         </div>
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
-        </div>
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">New Password (leave blank to keep current)</label>
-            <input type="password" id="password" placeholder="••••••••" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
-        </div>
-        <button onclick="updateProfile()" style="background: var(--premium-blue); color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold;">Update Profile</button>
-        <div id="msg" style="margin-top: 1rem; text-align: center;"></div>
     </div>
-</div>
+</main>
 
-<footer class="footer">
-    <div class="support-info">
-        <span>📧 Support: <a href="mailto:mutoniangel2005@gmail.com">mutoniangel2005@gmail.com</a></span>
-        <span>📞 Contact: <a href="tel:0798052603">0798052603</a></span>
-    </div>
-    <div class="copyright">
-        &copy; 2024 Smart Currency Monitoring & Exchange System. All rights reserved.
+<footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+        <div class="text-sm text-gray-500 mb-4 md:mb-0">
+            &copy; 2024 Smart Currency System. All rights reserved.
+        </div>
+        <div class="flex space-x-6 text-sm">
+            <a href="mailto:mutoniangel2005@gmail.com" class="text-gray-400 hover:text-gray-900 transition-colors"><i class="fa-solid fa-envelope mr-1"></i> Support</a>
+            <a href="tel:0798052603" class="text-gray-400 hover:text-gray-900 transition-colors"><i class="fa-solid fa-phone mr-1"></i> Contact</a>
+        </div>
     </div>
 </footer>
 
@@ -59,12 +128,13 @@
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
     const userRole = localStorage.getItem('role');
+    
     if (!token) window.location.href = 'index.html';
 
     document.getElementById('nav-username').innerText = username;
 
     if (userRole && userRole.toUpperCase() === 'ADMIN') {
-        document.getElementById('admin-link').style.display = 'inline';
+        document.getElementById('admin-link').style.display = 'inline-flex';
     }
 
     async function fetchProfile() {
@@ -84,6 +154,9 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const msg = document.getElementById('msg');
+        
+        msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        msg.className = 'mt-4 text-center text-sm font-medium text-gray-500 min-h-[20px]';
 
         const res = await fetch('/api/auth/update', {
             method: 'PUT',
@@ -95,11 +168,13 @@
         });
 
         if (res.ok) {
-            msg.innerText = 'Profile updated successfully!';
-            msg.style.color = 'green';
+            msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Profile updated successfully!';
+            msg.className = 'mt-4 text-center text-sm font-bold text-green-600 bg-green-50 py-2 rounded-lg min-h-[20px]';
+            document.getElementById('password').value = ''; // clear password field
+            setTimeout(() => { msg.innerHTML = ''; msg.className = 'mt-4 text-center text-sm font-medium min-h-[20px]'; }, 3000);
         } else {
-            msg.innerText = 'Failed to update profile.';
-            msg.style.color = 'red';
+            msg.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Failed to update profile.';
+            msg.className = 'mt-4 text-center text-sm font-bold text-red-600 bg-red-50 py-2 rounded-lg min-h-[20px]';
         }
     }
 
