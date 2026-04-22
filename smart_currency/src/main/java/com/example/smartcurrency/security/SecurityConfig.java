@@ -29,7 +29,7 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/index.html", "/dashboard.html", "/transactions.html", "/settings.html", "/admin_dashboard.html").permitAll()
+                .requestMatchers("/", "/index.html", "/login.html", "/dashboard.html", "/transactions.html", "/settings.html", "/admin_dashboard.html").permitAll()
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/currencies", "/api/currencies/filter").permitAll()
