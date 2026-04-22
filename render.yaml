@@ -1,0 +1,19 @@
+services:
+  # The Spring Boot Application
+  - type: web
+    name: smart-currency-app
+    env: docker
+    dockerContext: ./smart_currency
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8081
+      # These should be configured manually in the Render Dashboard
+      # or linked to a MySQL provider like TiDB or Aiven.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
