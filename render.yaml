@@ -3,14 +3,13 @@ services:
   - type: web
     name: smart-currency-app
     env: docker
-    dockerContext: ./smart_currency
+    dockerContext: .
+    dockerfilePath: Dockerfile
     plan: free
     region: oregon
     envVars:
       - key: PORT
         value: 8081
-      # These should be configured manually in the Render Dashboard
-      # or linked to a MySQL provider like TiDB or Aiven.
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
