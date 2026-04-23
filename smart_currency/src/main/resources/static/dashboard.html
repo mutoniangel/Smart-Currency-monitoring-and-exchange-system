@@ -34,6 +34,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .table-container::-webkit-scrollbar { height: 8px; }
@@ -119,6 +121,19 @@
                     <div class="p-4 bg-gray-50 rounded-xl text-center text-gray-500 col-span-full">
                         <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading wallets...
                     </div>
+                </div>
+            </div>
+
+            <!-- Market Trends Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-chart-line text-primary mr-2"></i> Market Trends
+                    </h2>
+                    <span id="chart-currency-name" class="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">USD Overview</span>
+                </div>
+                <div class="h-[300px] w-full">
+                    <canvas id="trendsChart"></canvas>
                 </div>
             </div>
 
@@ -473,6 +488,7 @@
 
                 window.allRates = rates;
                 updateWUInfo();
+                updateChart('USD'); // Default chart
                 fetchTransactions();
             }
         } catch (err) {
@@ -633,9 +649,79 @@
         }
     }
 
+    let trendsChart;
+    function updateChart(currencyCode) {
+        const ctx = document.getElementById('trendsChart').getContext('2d');
+        const currency = window.allRates.find(r => r.currencyCode === currencyCode) || { currentRate: 1, currencyCode: 'USD' };
+        
+        document.getElementById('chart-currency-name').innerText = `${currency.currencyCode} (7-Day Trend)`;
+
+        // Simulate 7-day trend data
+        const labels = ['6 Days Ago', '5 Days Ago', '4 Days Ago', '3 Days Ago', '2 Days Ago', 'Yesterday', 'Today'];
+        const baseRate = parseFloat(currency.currentRate);
+        const data = [
+            baseRate * (0.98 + Math.random() * 0.04),
+            baseRate * (0.98 + Math.random() * 0.04),
+            baseRate * (0.98 + Math.random() * 0.04),
+            baseRate * (0.98 + Math.random() * 0.04),
+            baseRate * (0.98 + Math.random() * 0.04),
+            baseRate * (0.98 + Math.random() * 0.04),
+            baseRate
+        ];
+
+        if (trendsChart) trendsChart.destroy();
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(46, 125, 50, 0.4)');
+        gradient.addColorStop(1, 'rgba(46, 125, 50, 0)');
+
+        trendsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `${currencyCode} Value`,
+                    data: data,
+                    borderColor: '#2e7d32',
+                    borderWidth: 3,
+                    fill: true,
+                    backgroundColor: gradient,
+                    tension: 0.4,
+                    pointBackgroundColor: '#2e7d32',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#1b5e20',
+                        titleFont: { family: 'Inter', weight: 'bold' },
+                        bodyFont: { family: 'Inter' }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+                    y: { 
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { font: { family: 'Inter', size: 11 }, callback: (v) => v.toFixed(4) }
+                    }
+                }
+            }
+        });
+    }
+
     function setTargetCurrency(code) {
         document.getElementById('to-currency').value = code;
         updateWUInfo();
+        updateChart(code);
         document.getElementById('ex-amount').focus();
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
